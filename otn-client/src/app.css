@@ -1,0 +1,111 @@
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
+.App {
+    font-family: sans-serif;
+    text-align: center;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.full-height-div {
+    flex: 1;
+    background-color: lightblue; /* Just to visualize */
+}
+
+#root {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;    
+  }
+
+header, footer {
+    padding: 1rem;
+    background-color: #f4f4f4;
+    text-align: center;
+    margin: 0;
+    padding: 0;  
+}
+
+.fill-grid {
+    block-size: 100%;
+}
+
+div.circle {
+    border: 5px solid;
+    border-color: red;
+    border-radius: 50%;
+    width: 10px; height: 10px;
+    box-sizing: border-box;
+}
+
+tr {
+    line-height: 10px;
+}
+
+td {
+    font-size: 12px;
+}
+
+.bar {
+    margin: 10px 0;
+    display: inline-block;
+    position: relative; /* Required for pseudo-elements */
+  }
+  
+  /* Rounded ends */
+  .bar.rounded {
+    border-radius: 10px;
+  }
+  
+  /* Square ends */
+  .bar.square {
+    border-radius: 0;
+  }
+  
+  /* Pointed ends */
+  .bar.pointed {
+    overflow: hidden; /* Ensure pseudo-elements are clipped */
+  }
+  
+  /* Using pseudo-elements for pointed ends */
+  .bar.pointed::before,
+  .bar.pointed::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    border-style: solid;
+  }
+  
+  /* Left pointed end */
+  .bar.pointed::before {
+    left: 0;
+    border-width: 10px 20px 10px 0; /* Adjust values to change point size */
+    border-color: transparent #333 transparent transparent; /* Match the color with the bar color */
+  }
+  
+  /* Right pointed end */
+  .bar.pointed::after {
+    right: 0;
+    border-width: 10px 0 10px 20px;
+    border-color: transparent transparent transparent #333; /* Match the color with the bar color */
+  }
+  /* Chamfered ends */
+.bar.chamfered {
+  clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px);
+}
