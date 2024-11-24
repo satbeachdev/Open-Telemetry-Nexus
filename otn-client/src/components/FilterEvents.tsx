@@ -19,6 +19,7 @@ const FilterEvents: React.FC<FilterEventsProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [attributeNames, setAttributeNames] = useState<string[]>([]);
   const [isMonitoring, setIsMonitoring] = useState(true);
+  const [isSelecting, setIsSelecting] = useState(false);
 
   useEffect(() => {
     const loadAttributeNames = async () => {
@@ -50,7 +51,7 @@ const FilterEvents: React.FC<FilterEventsProps> = ({
   };
 
   const handleKeyPress = (event: React.KeyboardEvent) => {
-    if (event.key === 'Enter') {
+    if (event.key === 'Enter' && !isSelecting) {
       handleSearch();
     }
   };
@@ -87,9 +88,13 @@ const FilterEvents: React.FC<FilterEventsProps> = ({
               setSearchTerm(replaceLastWord(searchTerm, newValue));
             }
             setIsMonitoring(false);
+            setTimeout(() => setIsSelecting(false), 100);
           }}
           onInputChange={handleInputChange}
           onClose={() => setIsMonitoring(false)}
+          onHighlightChange={(event, option) => {
+            setIsSelecting(option !== null);
+          }}
           renderInput={(params) => (
             <TextField 
               {...params} 
