@@ -1,5 +1,5 @@
 import React, { useState, Fragment, useEffect } from 'react';
-import { Button, TextField, Box, Typography, IconButton, Autocomplete, Checkbox, FormControlLabel } from '@mui/material';
+import { Button, TextField, Box, Typography, IconButton, Autocomplete, Switch, FormControlLabel } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import EventService from '../eventService';
 
@@ -69,7 +69,7 @@ const FilterEvents: React.FC<FilterEventsProps> = ({
 
   const currentWord = getCurrentWord(searchTerm);
   const matchingOptions = attributeNames.filter(name => 
-    name.toLowerCase().startsWith(currentWord.toLowerCase())
+    name.toLowerCase().includes(currentWord.toLowerCase())
   );
   
   const shouldShow = isMonitoring && currentWord.length >= 2;
@@ -129,7 +129,7 @@ const FilterEvents: React.FC<FilterEventsProps> = ({
         <Box flexGrow={1} display="flex" justifyContent="flex-end">
           <FormControlLabel
             control={
-              <Checkbox
+              <Switch
                 checked={autoRefreshEnabled}
                 onChange={(e) => onAutoRefreshChange?.(e.target.checked)}
                 size="small"
