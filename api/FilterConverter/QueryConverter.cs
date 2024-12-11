@@ -10,8 +10,8 @@ public static class QueryConverter
         var tokenizer = QueryTokenizer.CreateTokenizer();
         var tokens = tokenizer.Tokenize(input);
 
-        var parsedQuery = QueryParser.Expression(keyValueFields).Parse(tokens);
+        var parsedQuery = QueryParser.Parse(tokens, keyValueFields);
 
-        return $"SELECT A.* FROM events AS A{Environment.NewLine}{parsedQuery};";
+        return $"SELECT e.* FROM events e INNER JOIN eventattributes ea ON e.id = ea.eventid WHERE {parsedQuery};";
     }
 }

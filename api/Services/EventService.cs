@@ -29,14 +29,14 @@ public class EventService(IConfiguration config, IEventRepository eventRepositor
         await using var connection = new NpgsqlConnection(_connectionString);
         await connection.OpenAsync();
 
-        var names = await eventAttributeRepository.GetUniqueNames(connection);
-
-        var uniqueNames = names.ToDictionary(k => k, v => v);
-
         var events = default((IEnumerable<Event>, int));
         
         if (!string.IsNullOrWhiteSpace(filter))
         {
+            var names = await eventAttributeRepository.GetUniqueNames(connection);
+
+            var uniqueNames = names.ToDictionary(k => k, v => v);
+
             var where = QueryConverter.ToPostgresSql(filter, uniqueNames);
 
             events = await eventRepository.Load(where, skip, limit, connection);
@@ -49,21 +49,22 @@ public class EventService(IConfiguration config, IEventRepository eventRepositor
         return events;
     }    
     
-    public async Task Save(LogMessage logMessage)
+    public async Task Save(LogMessage message)
     {
         await using var connection = new NpgsqlConnection(_connectionString);
         await connection.OpenAsync();
 
-        foreach (var logRecord in logMessage.resourceLogs.SelectMany(resourceLog => resourceLog.scopeLogs.SelectMany(scopeLog => scopeLog.logRecords)))
+        foreach (var logRecord in message.resourceLogs.SelectMany(resourceLog => resourceLog.scopeLogs.SelectMany(scopeLog => scopeLog.logRecords)))
         {
             var timestamp = TimeConverter.EpochToDateTime(long.Parse(logRecord.timeUnixNano));
             
             var @event = new Event()
             {
                 TraceId = logRecord.traceId,
+                ParentSpanId = null,
                 SpanId = logRecord.spanId,
                 Message = logRecord.body.stringValue,
-                ServiceName = GetServiceNameFromAttributes(logMessage.resourceLogs[0].resource.attributes),
+                ServiceName = (string?)(message.resourceLogs[0].resource.attributes.SingleOrDefault(a => a.Key == "service.name"))?.Value ?? string.Empty,
                 StartTime = timestamp,
                 EndTime = timestamp,
                 DurationMilliseconds = 0,
@@ -71,15 +72,23 @@ public class EventService(IConfiguration config, IEventRepository eventRepositor
             };
             
             var id = await eventRepository.Insert(@event, connection);
-
+        
             if (id != null)
             {
                 var eventId = (int)id;
                 
-                logRecord.attributes.Add(new Attribute() { Key = "severity", Value = logRecord.severityNumber });
-                logRecord.attributes.Add(new Attribute() { Key = "severity_text", Value = logRecord.severityText });
-                
-                await eventAttributeRepository.Insert(logRecord.attributes, eventId, connection);
+                var attributes = new Dictionary<string, object>()
+                {
+                    { "severity", logRecord.severityNumber },
+                    {"severity_text", logRecord.severityText }
+                };
+
+                foreach (var attrib in logRecord.attributes)
+                {
+                    attributes.Add(attrib.Key, attrib.Value);
+                }
+
+                await eventAttributeRepository.Insert(attributes, eventId, connection);
             }
         }
     }
@@ -89,13 +98,15 @@ public class EventService(IConfiguration config, IEventRepository eventRepositor
         await using var connection = new NpgsqlConnection(_connectionString);
         await connection.OpenAsync();
 
+        var attributes = new Dictionary<string, object>();
+        
         foreach (var resourceSpan in message.resourceSpans)
         {
-            var resourceSpanAttribs = GetResourceAttributes(resourceSpan);
+            AddResourceAttributes(resourceSpan, attributes);
 
             foreach (var scopeSpan in resourceSpan.scopeSpans)
             {
-                var scopeSpanAttribs = GetScopeAttributes(scopeSpan);
+                AddScopeAttributes(scopeSpan, attributes);
 
                 foreach (var span in scopeSpan.spans)
                 {
@@ -108,7 +119,7 @@ public class EventService(IConfiguration config, IEventRepository eventRepositor
                         ParentSpanId = span.parentSpanId,
                         SpanId = span.spanId,
                         Message = span.name,
-                        ServiceName = GetServiceNameFromAttributes(resourceSpanAttribs),
+                        ServiceName = GetServiceNameFromAttributes(attributes),
                         StartTime = startTime,
                         EndTime = endTime,
                         DurationMilliseconds = (endTime - startTime).TotalMilliseconds,
@@ -116,52 +127,77 @@ public class EventService(IConfiguration config, IEventRepository eventRepositor
                     };
                     
                     var id = await eventRepository.Insert(@event, connection);
-
+                    
                     if (id != null)
                     {
                         var eventId = (int)id;
+                    
+                        attributes.Add("kind", span.kind);
 
-                        if (span.attributes == null)
+                        if (span.attributes != null)
                         {
-                            span.attributes = new List<Attribute>();
+                            foreach (var attribute in span.attributes)
+                            {
+                                attributes.Add(attribute.Key, attribute.Value);
+                            }
                         }
-                        
-                        span.attributes.Add(new Attribute() { Key = "kind", Value = span.kind });
-                        
-                        await eventAttributeRepository.Insert(resourceSpanAttribs, eventId, connection);
-                        await eventAttributeRepository.Insert(scopeSpanAttribs, eventId, connection);
-                        await eventAttributeRepository.Insert(span.attributes, eventId, connection);
+
+                        await eventAttributeRepository.Insert(attributes, eventId, connection);
                     }
                 }
             }
         }
     }
 
-    private string GetServiceNameFromAttributes(IEnumerable<Attribute> attributes)
+    private string GetServiceNameFromAttributes(Dictionary<string, object> attributes)
     {
         var serviceName = string.Empty;
-        
-        var attrib = attributes.SingleOrDefault(a => a.Key.Contains("service.name"));
-        
-        if (attrib != null)
+
+        if (attributes.TryGetValue("resource.service.name", out var name))
         {
-            serviceName = attrib.Value?.ToString() ?? string.Empty;
+            serviceName = (string)name;
         }
         
         return serviceName;
     }
-    private List<Attribute> GetResourceAttributes(ResourceSpan resourceSpan)
+    // Span Attributes
+    
+    private void AddResourceAttributes(ResourceSpan resourceSpan, Dictionary<string, object> attributes)
     {
-        return [..resourceSpan.resource.attributes.Select(a => new Attribute { Key = $"resource.{a.Key}", Value = a.Value })];
+        foreach (var attribute in resourceSpan.resource.attributes)
+        {
+            attributes.Add($"resource.{attribute.Key}", attribute.Value);
+        }
     }
 
-    private List<Attribute> GetScopeAttributes(ScopeSpan scopeSpan)
+    private void AddScopeAttributes(ScopeSpan scopeSpan, Dictionary<string, object> attributes)
     {
-        if (scopeSpan == null || scopeSpan.scope == null || scopeSpan.scope.attributes == null)
+        if (scopeSpan.scope.attributes != null)
         {
-            return [];
+            foreach (var attribute in scopeSpan.scope.attributes)
+            {
+                attributes.Add($"scope.{attribute.Key}", attribute.Value);
+            }
         }
-        
-        return [..scopeSpan.scope.attributes.Select(a => new Attribute { Key = $"scope.{a.Key}", Value = a.Value })];
+    }
+    
+    // Log Attributes
+    private void AddResourceAttributes(ResourceLog resourceLog, Dictionary<string, object> attributes)
+    {
+        foreach (var attribute in resourceLog.resource.attributes)
+        {
+            attributes.Add($"resource.{attribute.Key}", attribute.Value);
+        }
+    }
+
+    private void AddScopeAttributes(ScopeLog scopeLog, Dictionary<string, object> attributes)
+    {
+        if (scopeLog.scope.attributes != null)
+        {
+            foreach (var attribute in scopeLog.scope.attributes)
+            {
+                attributes.Add($"scope.{attribute.Key}", attribute.Value);
+            }
+        }
     }
 }

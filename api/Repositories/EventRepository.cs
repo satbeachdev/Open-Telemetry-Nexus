@@ -11,21 +11,32 @@ public class EventRepository : IEventRepository
 {
     private const string InsertCommand = @"INSERT INTO Events (trace_id, parent_span_id, span_id, message, start_timestamp, end_timestamp, duration, is_trace, service_name) VALUES (:trace_id, :parent_span_id, :span_id, :message, :start_timestamp, :end_timestamp, :duration, :is_trace, :service_name) RETURNING id;";
     
-    public Task<object?> Insert(Event @event, NpgsqlConnection connection)
+    public async Task<object?> Insert(Event @event, NpgsqlConnection connection)
     {
-        var command = new NpgsqlCommand(InsertCommand, connection);
+        object? id = default;
+        
+        try
+        {
+            var command = new NpgsqlCommand(InsertCommand, connection);
 
-        command.Parameters.AddWithValue("trace_id", @event.TraceId);
-        command.Parameters.AddWithValue("parent_span_id", @event.ParentSpanId);
-        command.Parameters.AddWithValue("span_id", @event.SpanId);
-        command.Parameters.AddWithValue("message", @event.Message);
-        command.Parameters.AddWithValue("start_timestamp", @event.StartTime);
-        command.Parameters.AddWithValue("end_timestamp", @event.EndTime);
-        command.Parameters.AddWithValue("duration", @event.DurationMilliseconds);
-        command.Parameters.AddWithValue("is_trace", @event.IsTrace);
-        command.Parameters.AddWithValue("service_name", @event.ServiceName);
+            command.Parameters.AddWithValue("trace_id", @event.TraceId);
+            command.Parameters.AddWithValue("parent_span_id", @event.ParentSpanId == null ? DBNull.Value : @event.ParentSpanId);
+            command.Parameters.AddWithValue("span_id", @event.SpanId);
+            command.Parameters.AddWithValue("message", @event.Message);
+            command.Parameters.AddWithValue("start_timestamp", @event.StartTime);
+            command.Parameters.AddWithValue("end_timestamp", @event.EndTime);
+            command.Parameters.AddWithValue("duration", @event.DurationMilliseconds);
+            command.Parameters.AddWithValue("is_trace", @event.IsTrace);
+            command.Parameters.AddWithValue("service_name", @event.ServiceName);
 
-        return command.ExecuteScalarAsync();
+            id = await command.ExecuteScalarAsync();
+        } 
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
+
+        return await Task.FromResult(id);
     }
 
     public async Task<(IEnumerable<Event> Events, int Count)> Load(int skip, int limit, NpgsqlConnection connection)
@@ -70,18 +81,8 @@ public class EventRepository : IEventRepository
                     return property ?? type.GetProperty(columnName, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
                 }));
 
-        // var sql = new StringBuilder("SELECT * FROM Events ");
-        //
-        // if (!string.IsNullOrWhiteSpace(whereClause))
-        // {
-        //     sql.Append($"{whereClause} ");
-        // }
-        //
-        // sql.Append($"ORDER BY start_timestamp DESC OFFSET {skip} LIMIT {limit};");
-        
         var rows = await connection.QueryAsync<Event>(whereClause);
 
-        //return (rows, await connection.ExecuteScalarAsync<int>($"SELECT COUNT(id) FROM Events {whereClause}".Trim()));
         return (rows, rows.Count());
     }    
 }

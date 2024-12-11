@@ -39,6 +39,7 @@ public static class QueryTokenizer
             .Match(Span.EqualTo("<"), QueryToken.LessThan)
             .Match(Span.EqualTo("<="), QueryToken.LessThanOrEqual)
             .Match(Span.EqualTo("~"), QueryToken.Like)
+            .Match(Span.EqualTo("LIKE"), QueryToken.Like)
             .Match(Span.Regex(@"\d{4}-\d{2}-\d{2}"), QueryToken.Date)
             .Match(QuotedString.SqlStyle, QueryToken.String)
             .Match(Numerics.Integer, QueryToken.Number)

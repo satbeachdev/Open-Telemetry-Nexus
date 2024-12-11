@@ -49,6 +49,7 @@ app.MapGet("/events/{traceId}/events", async (HttpContext ctx, [FromRoute] strin
 app.MapGet("/events/attribute-names", async (HttpContext ctx, [FromServices]IWebRequestHandler getUniqueAttributes) => await getUniqueAttributes.Handle(ctx));
 
 app.UseMiddleware<GzipDecompressionMiddleware>();
+//app.UseMiddleware<LogJsonRequestBodyMiddleware>();
 
 app.UseCors("AllowSpecificOrigin");
 

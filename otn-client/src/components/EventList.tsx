@@ -196,8 +196,32 @@ const InternalEventList: React.FC = () => {
                     <TableBody>
                         {eventAttributes.map((attr, index) => (
                             <TableRow key={index}>
-                                <TableCell component="th" scope="row" sx={{ padding: '4px 16px 4px 0' }}>{attr.name}</TableCell>
-                                <TableCell sx={{ padding: '4px 0' }}>{attr.value}</TableCell>
+                                <TableCell 
+                                    component="th" 
+                                    scope="row" 
+                                    sx={{ 
+                                        padding: '4px 16px 4px 0',
+                                        verticalAlign: 'top' // Align to top for multiline content
+                                    }}
+                                >
+                                    {attr.name}
+                                </TableCell>
+                                <TableCell 
+                                    sx={{ 
+                                        padding: '4px 0',
+                                        whiteSpace: 'pre-wrap', // Preserve line breaks
+                                        wordBreak: 'break-word', // Break long words if needed
+                                        ...(attr.name === 'exception.stacktrace' && {
+                                            backgroundColor: 'error.main',
+                                            color: 'white',
+                                            padding: '8px 12px',
+                                            borderRadius: '4px',
+                                            fontFamily: 'monospace' // Optional: better for error messages
+                                        })
+                                    }}
+                                >
+                                    {attr.value}
+                                </TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
