@@ -1,5 +1,6 @@
 using Attribute = api.Models.OpenTelemetry.Attribute;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace api.Models;
 
@@ -32,6 +33,4 @@ public class Event
     public double DurationMilliseconds { get; set; }
     
     public bool IsTrace { get; set; }
-    
-    public IEnumerable<Attribute> Attributes { get; set; } = [];    
 }

@@ -84,5 +84,10 @@ public class EventRepository : IEventRepository
         var rows = await connection.QueryAsync<Event>(whereClause);
 
         return (rows, rows.Count());
+    }  
+    
+    public async Task<IEnumerable<string>> GetUniqueNames(NpgsqlConnection connection)
+    {
+        return await connection.QueryAsync<string>("SELECT DISTINCT jsonb_object_keys(attributes) as name FROM Events ORDER By name ASC");
     }    
 }

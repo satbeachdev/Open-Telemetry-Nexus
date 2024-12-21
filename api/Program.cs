@@ -20,9 +20,6 @@ builder.Services.AddTransient<IWebRequestHandler, GetUniqueAttributes>();
 builder.Services.AddTransient<IEventService, EventService>();
 builder.Services.AddTransient<IEventRepository, EventRepository>();
 
-builder.Services.AddTransient<IEventAttributeService, EventAttributeService>();
-builder.Services.AddTransient<IEventAttributeRepository, EventAttributeRepository>();
-
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigin",

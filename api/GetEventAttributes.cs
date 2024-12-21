@@ -15,9 +15,9 @@ public class GetEventAttributes(IConfiguration config) : IWebRequestHandler<int>
         await using var connection = new NpgsqlConnection(_connectionString);
         await connection.OpenAsync();
 
-        var sql = "SELECT * FROM EventAttributes WHERE eventId = @EventId";
+        var sql = "SELECT attributes FROM Events WHERE id = @EventId";
         
-        var result = await connection.QuerySingleAsync<dynamic>("SELECT attributes from EventAttributes where eventId = @EventId", new {EventId = eventId});
+        var result = await connection.QuerySingleAsync<dynamic>(sql, new {EventId = eventId});
 
         // Deserialize the attributes column
         Dictionary<string, object> attributes = JsonSerializer.Deserialize<Dictionary<string, object>>(result.attributes.ToString());

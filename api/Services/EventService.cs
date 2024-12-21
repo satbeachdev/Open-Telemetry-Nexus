@@ -8,7 +8,7 @@ using Attribute = api.Models.OpenTelemetry.Attribute;
 
 namespace api.Services;
 
-public class EventService(IConfiguration config, IEventRepository eventRepository, IEventAttributeRepository eventAttributeRepository, ILogger<EventService> logger) : IEventService
+public class EventService(IConfiguration config, IEventRepository eventRepository, ILogger<EventService> logger) : IEventService
 {
     private readonly IConfiguration _config = config;
     private readonly ILogger<EventService> _logger = logger;
@@ -33,7 +33,7 @@ public class EventService(IConfiguration config, IEventRepository eventRepositor
         
         if (!string.IsNullOrWhiteSpace(filter))
         {
-            var names = await eventAttributeRepository.GetUniqueNames(connection);
+            var names = await eventRepository.GetUniqueNames(connection);
 
             var uniqueNames = names.ToDictionary(k => k, v => v);
 
@@ -88,7 +88,7 @@ public class EventService(IConfiguration config, IEventRepository eventRepositor
                     attributes.Add(attrib.Key, attrib.Value);
                 }
 
-                await eventAttributeRepository.Insert(attributes, eventId, connection);
+                //await eventAttributeRepository.Insert(attributes, eventId, connection);
             }
         }
     }
@@ -142,13 +142,21 @@ public class EventService(IConfiguration config, IEventRepository eventRepositor
                             }
                         }
 
-                        await eventAttributeRepository.Insert(attributes, eventId, connection);
+                        //await eventAttributeRepository.Insert(attributes, eventId, connection);
                     }
                 }
             }
         }
     }
+    
+    public async Task<IEnumerable<string>> GetUniqueNames()
+    {
+        await using var connection = new NpgsqlConnection(_connectionString);
+        await connection.OpenAsync();
 
+        return await eventRepository.GetUniqueNames(connection);
+    }
+    
     private string GetServiceNameFromAttributes(Dictionary<string, object> attributes)
     {
         var serviceName = string.Empty;

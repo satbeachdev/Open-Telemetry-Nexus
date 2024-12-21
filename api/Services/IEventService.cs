@@ -11,4 +11,6 @@ public interface IEventService
     Task Save(LogMessage logMessage);
     
     Task Save(TraceMessage logMessage);
+    
+    Task<IEnumerable<string>> GetUniqueNames();
 }
