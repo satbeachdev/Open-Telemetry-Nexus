@@ -1,9 +1,9 @@
 import React from 'react';
-import Tooltip from '@mui/material/Tooltip';
+import EventTooltip from './EventTooltip';
 import TimeFormatter from '../TimeFormatter';
 
-interface TraceEventProps {
-  id: string;
+interface TraceEventBarProps {
+  eventId: number;
   message: string;
   left: string;
   width: string;
@@ -13,10 +13,11 @@ interface TraceEventProps {
   textColor: string;
   offset: number;
   duration: number;
+  onHover: (eventId: number | null) => void;
 }
 
-const TraceEventBar: React.FC<TraceEventProps> = ({
-  id,
+const TraceEventBar: React.FC<TraceEventBarProps> = ({
+  eventId,
   message,
   left,
   width,
@@ -25,72 +26,41 @@ const TraceEventBar: React.FC<TraceEventProps> = ({
   backgroundColor,
   textColor,
   offset,
-  duration
+  duration,
+  onHover
 }) => {
-  const index = parseInt(id, 10);
-
   return (
-      <div style={{ position: 'relative' }}>
-      {index > 1  && (
-          <span
-            style={{ 
-              position: 'absolute', 
-              top,
-              left,
-              fontSize: '9px',
-              whiteSpace: 'nowrap',
-              transform: 'translate(-100%, 50%)',
-              paddingRight: '4px',
-            }}
-          >
-            {TimeFormatter.FormatTime(offset)}
-          </span>
-        )}
-    <Tooltip
-      key={id}
-      title={`@${TimeFormatter.FormatTime(offset)} (${TimeFormatter.FormatTime(duration)}): ${message}`}
-      arrow={true}
-      placement="bottom"
-      PopperProps={{
-        modifiers: [
-          {
-            name: 'offset',
-            options: {
-              offset: [0, -barHeight/2],
-            },
-          },
-        ],
+    <EventTooltip 
+      title={`@${TimeFormatter.FormatTime(offset)} for ${TimeFormatter.FormatTime(duration)}: ${message}`}
+      onMouseEnter={() => {
+        console.log('TraceEventBar hover enter:', eventId);
+        onHover(eventId);
       }}
-      componentsProps={{
-        tooltip: {
-          sx: {
-            fontSize: '12px',
-          },
-        },
+      onMouseLeave={() => {
+        console.log('TraceEventBar hover leave:', eventId);
+        onHover(null);
       }}
-    >
-    <div
-        style={{
+      style={{
         position: 'absolute',
         left,
         width,
-        height: barHeight,
         top,
+        height: barHeight,
         backgroundColor,
+        color: textColor,
+        display: 'flex',
+        alignItems: 'center',
+        padding: '0 4px',
         overflow: 'hidden',
         whiteSpace: 'nowrap',
-        textOverflow: 'ellipsis',
+        cursor: 'pointer',
         fontSize: '12px',
-        lineHeight: `${barHeight}px`,
-        padding: '0 4px',
-        boxSizing: 'border-box',
-        color: textColor,
-        }}
+        borderRadius: '4px',
+      }}
     >
-        {message}
-    </div>
-    </Tooltip>
-    </div>);
+      {message}
+    </EventTooltip>
+  );
 };
 
 export default TraceEventBar;

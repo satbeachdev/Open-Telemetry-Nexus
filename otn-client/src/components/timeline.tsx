@@ -16,6 +16,7 @@ import TraceEventBar from './TraceEvent';
 
 interface TimelineProps {
   events: TraceEvent[]; // Changed from bars to events
+  onEventHover: (eventId: number | null) => void;  // Changed Number to number for consistency
 }
 
 export enum EventType {
@@ -24,7 +25,7 @@ export enum EventType {
   Trace = 'Trace'
 }
 
-const Timeline: React.FC<TimelineProps> = ({ events }) => { // Changed from bars to events
+const Timeline: React.FC<TimelineProps> = ({ events, onEventHover }) => { // Changed from bars to events
   
   const theme = useTheme(); // Get the current theme
 
@@ -46,7 +47,7 @@ const Timeline: React.FC<TimelineProps> = ({ events }) => { // Changed from bars
     const map = new Map<string, string>();
     let colorIndex = 0;
 
-    // Define a color palette based on the theme
+    // Define a color palette based on the themeß
     const colorPalette = [
       theme.palette.primary.main,
       theme.palette.secondary.main,
@@ -117,21 +118,19 @@ const Timeline: React.FC<TimelineProps> = ({ events }) => { // Changed from bars
     let lastEventType: EventType = EventType.Undefined;
 
     return events.map((event, index) => {
+
       const { left, width } = calculateBarPosition(event);
       const isLogEvent = event.durationMilliseconds === 0;
 
       if (isLogEvent) {
-        // Log Event
         if (lastEventType === EventType.Trace) {
           currentTop += barHeight + barSpacing;
         }
-
         lastEventType = EventType.Log;
       } else {
         if (index > 0) {
           currentTop += barHeight + barSpacing;
         }
-
         lastEventType = EventType.Trace;
       }
 
@@ -140,11 +139,16 @@ const Timeline: React.FC<TimelineProps> = ({ events }) => { // Changed from bars
           <LogEvent
             key={event.id}
             id={event.id}
+            index={index}
             message={event.message}
             left={left}
             top={currentTop}
             barHeight={barHeight}
             offset={event.offsetMilliseconds}
+            onHover={(id) => {
+              console.log('Log event hover:', id, 'Original event.id:', Number(event.id));
+              onEventHover(Number(id));
+            }}
           />
         );
       }
@@ -155,7 +159,7 @@ const Timeline: React.FC<TimelineProps> = ({ events }) => { // Changed from bars
       return (
         <TraceEventBar
           key={event.id}
-          id={event.id}
+          eventId={event.id}
           message={event.message}
           left={left}
           width={width}
@@ -165,6 +169,10 @@ const Timeline: React.FC<TimelineProps> = ({ events }) => { // Changed from bars
           textColor={textColor}
           offset={event.offsetMilliseconds}
           duration={event.durationMilliseconds}
+          onHover={(id) => {
+            console.log('Trace event hover:', id, 'Original event.id:', Number(event.id));
+            onEventHover(Number(id));
+          }}
         />
       );
     });

@@ -12,14 +12,19 @@ public class GetTraceEvents(IConfiguration config) : IWebRequestHandler<string>
         await using var connection = new NpgsqlConnection(_connectionString);
         await connection.OpenAsync();
 
+        // var sql = """
+        //           SELECT (ROW_NUMBER() OVER ())::integer as id, message,start_timestamp, end_timestamp, span_id
+        //           FROM events e
+        //           WHERE trace_id = @TraceId
+        //           ORDER BY id
+        //           """;
+        
         var sql = """
-                  SELECT (ROW_NUMBER() OVER ())::integer as id, message,start_timestamp, end_timestamp, span_id
-                  FROM events
+                  SELECT id, message,start_timestamp, end_timestamp, span_id
+                  FROM events e
                   WHERE trace_id = @TraceId
                   ORDER BY start_timestamp
-                  """;
-        
-        var results = await connection.QueryAsync(sql, new {TraceId = traceId});
+                  """;        var results = await connection.QueryAsync(sql, new {TraceId = traceId});
         var events = results.Select(row => new Event() {Message = row.message, StartTime = row.start_timestamp, EndTime = row.end_timestamp, SpanId = row.span_id, Id = row.id, TraceId = traceId}).ToList();
 
         foreach (var @event in events)

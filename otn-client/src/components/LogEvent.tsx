@@ -1,63 +1,53 @@
 import React from 'react';
-import Tooltip from '@mui/material/Tooltip';
+import EventTooltip from './EventTooltip';
 import TimeFormatter from '../TimeFormatter';
 
 interface LogEventProps {
-  id: string;
+  id: number;
+  index: number;
   message: string;
   left: string;
   top: number;
   barHeight: number;
   offset: number;
+  onHover: (eventId: number | null) => void;
 }
 
-const LogEvent: React.FC<LogEventProps> = ({ id, message, left, top, barHeight, offset }) => {
-  const index = parseInt(id, 10);
-
+const LogEvent: React.FC<LogEventProps> = ({ id, index, message, left, top, barHeight, offset, onHover }) => {
   return (
-    <Tooltip 
+    <EventTooltip
       title={`@${TimeFormatter.FormatTime(offset)}: ${message}`}
-      key={id}
-      PopperProps={{
-        modifiers: [
-          {
-            name: 'offset',
-            options: {
-              offset: [0, -barHeight],
-            },
-          },
-        ],
+      style={{ 
+        position: 'absolute', 
+        left, 
+        top,
+        cursor: 'default'
       }}
-      slotProps={{
-        tooltip: {
-          sx: {
-            fontSize: '12px',
-          },
-        },
+      onMouseEnter={() => {
+        console.log('LogEvent hover enter:', { id });
+        onHover(id);
+      }}
+      onMouseLeave={() => {
+        console.log('LogEvent hover leave:', { id });
+        onHover(null);
       }}
     >
-      <div style={{ 
-          position: 'absolute', 
-          left, 
-          top,
-          cursor: 'default' // This keeps the cursor as a pointer
-        }}>
-        {index > 1  && (
+      {index > 1 && (
         <span
           style={{ 
             position: 'absolute', 
             fontSize: '9px',
             whiteSpace: 'nowrap',
-            transform: 'translate(-100%, 50%)', // Center vertically
+            transform: 'translate(-100%, 50%)',
           }}
         >
           {TimeFormatter.FormatTime(offset)}
-        </span>)}
-        <span className="material-symbols-outlined">
-          event_note
         </span>
-      </div>
-    </Tooltip>
+      )}
+      <span className="material-symbols-outlined">
+        chat
+      </span>
+    </EventTooltip>
   );
 };
 

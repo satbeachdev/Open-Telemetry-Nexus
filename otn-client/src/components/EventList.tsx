@@ -28,17 +28,42 @@ const InternalEventList: React.FC = () => {
     const [resultCount, setResultCount] = useState<number>(0);
     const [searchTerm, setSearchTerm] = useState('');
     const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true);
+    const [highlightedEventId, setHighlightedEventId] = useState<Number | null>(null);
 
-	    // Add refresh effect
+    const { data, fetchNextPage, isError, isFetching, isLoading, refetch } = useInfiniteQuery<EventQueryResult>({
+		queryKey: ['events', searchTerm],
+		queryFn: async ({ pageParam }) => {
+			const skip = (pageParam as number) * ITEMS_PER_PAGE;
+
+			const result = await EventService.FilterEvents(searchTerm, skip, ITEMS_PER_PAGE);
+
+            setResultCount(result.count);
+
+            if (highlightedEventId) {
+                const highlightedEventExists = result.data.some(event => event.id === highlightedEventId);
+                if (!highlightedEventExists) {
+                    setHighlightedEventId(null);
+                }
+            }
+
+			return { events: result.data, nextPage: (pageParam as number) + 1 };
+		},
+		initialPageParam: 0,
+		getNextPageParam: (lastPage) => lastPage.nextPage,
+		refetchOnWindowFocus: false,
+	});
+
     useEffect(() => {
         if (!autoRefreshEnabled) return;
 
         const timer = setInterval(() => {
-            refetch();
+            if (!isFetching) {
+                refetch();
+            }
         }, REFRESH_INTERVAL);
 
         return () => clearInterval(timer);
-    }, [autoRefreshEnabled]); 
+    }, [autoRefreshEnabled, isFetching, refetch]); 
 
     useEffect(() => {
 		const updateHeight = () => {
@@ -96,22 +121,6 @@ const InternalEventList: React.FC = () => {
 		[]
 	);
 
-	const { data, fetchNextPage, isError, isFetching, isLoading, refetch } = useInfiniteQuery<EventQueryResult>({
-		queryKey: ['events', searchTerm],
-		queryFn: async ({ pageParam }) => {
-			const skip = (pageParam as number) * ITEMS_PER_PAGE;
-
-			const result = await EventService.FilterEvents(searchTerm, skip, ITEMS_PER_PAGE);
-
-            setResultCount(result.count);
-
-			return { events: result.data, nextPage: (pageParam as number) + 1 };
-		},
-		initialPageParam: 0,
-		getNextPageParam: (lastPage) => lastPage.nextPage,
-		refetchOnWindowFocus: false,
-	});
-
 	const flatData = useMemo(() => 
 		(data as InfiniteData<EventQueryResult>)?.pages.flatMap((page) => page.events) ?? [], 
 		[data]
@@ -121,6 +130,7 @@ const InternalEventList: React.FC = () => {
         if (row.traceId) {
           EventService.LoadTraceEvents(row.traceId)
             .then(events => {
+                console.log('Trace Events:', events.map(e => ({ id: e.id, message: e.message })));
                 setTraceEvents(events);
                 setTopPaneSize(240);
             })
@@ -142,6 +152,10 @@ const InternalEventList: React.FC = () => {
         tableRow.toggleExpanded();
       };
       
+    const handleEventHover = (eventId: Number | null) => {
+      setHighlightedEventId(eventId);
+    };
+
     const tableOptions: MRT_TableOptions<Event> = {
 		columns,
 		data: flatData,
@@ -186,10 +200,19 @@ const InternalEventList: React.FC = () => {
 				},
 			},
 		},
-        muiTableBodyRowProps: ({ row }) => ({
-            onClick: () => handleRowClick(row.original, row),
-            sx: { cursor: 'pointer' },
-          }),
+        muiTableBodyRowProps: ({ row }) => {
+            const isHighlighted = row.original?.id === highlightedEventId;
+            
+            return {
+                onClick: () => handleRowClick(row.original, row),
+                sx: {
+                    cursor: 'pointer',
+                    backgroundColor: isHighlighted ? 
+                      theme.palette.action.selected : 
+                      'inherit',
+                },
+            };
+        },
         renderDetailPanel: ({ row }) => (
             <Box sx={{ padding: '1rem' }}>
                 <Table size="small" sx={{ '& td, & th': { border: 'none' } }}>
@@ -266,7 +289,10 @@ const InternalEventList: React.FC = () => {
                 }}>
                     <div style={{ height: topPaneSize, overflow: 'auto' }}>
                         <Typography variant="h6">Trace Timeline</Typography>
-                        <Timeline events={traceEvents} />
+                        <Timeline 
+                            events={traceEvents} 
+                            onEventHover={handleEventHover}
+                        />
                     </div>
                 </Paper>
             </Allotment.Pane>

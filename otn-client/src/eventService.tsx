@@ -13,7 +13,7 @@ export interface Event {
 }
 
 export interface TraceEvent {
-  id: string;
+  id: number;
   message: string;
   startTime: ZonedDateTime; 
   endTime: ZonedDateTime;
