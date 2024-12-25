@@ -11,9 +11,10 @@ interface LogEventProps {
   barHeight: number;
   offset: number;
   onHover: (eventId: number | null) => void;
+  onClick: (eventId: number) => void;
 }
 
-const LogEvent: React.FC<LogEventProps> = ({ id, index, message, left, top, barHeight, offset, onHover }) => {
+const LogEvent: React.FC<LogEventProps> = ({ id, index, message, left, top, barHeight, offset, onHover, onClick }) => {
   return (
     <EventTooltip
       title={`@${TimeFormatter.FormatTime(offset)}: ${message}`}
@@ -21,16 +22,11 @@ const LogEvent: React.FC<LogEventProps> = ({ id, index, message, left, top, barH
         position: 'absolute', 
         left, 
         top,
-        cursor: 'default'
+        cursor: 'pointer'
       }}
-      onMouseEnter={() => {
-        console.log('LogEvent hover enter:', { id });
-        onHover(id);
-      }}
-      onMouseLeave={() => {
-        console.log('LogEvent hover leave:', { id });
-        onHover(null);
-      }}
+      onMouseEnter={() => onHover(id)}
+      onMouseLeave={() => onHover(null)}
+      onClick={() => onClick(id)}
     >
       {index > 1 && (
         <span

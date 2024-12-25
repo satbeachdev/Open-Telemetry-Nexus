@@ -16,7 +16,8 @@ import TraceEventBar from './TraceEvent';
 
 interface TimelineProps {
   events: TraceEvent[]; // Changed from bars to events
-  onEventHover: (eventId: number | null) => void;  // Changed Number to number for consistency
+  onEventHover: (eventId: Number | null) => void;  // Changed Number to number for consistency
+  onEventClick: (eventId: number) => void;
 }
 
 export enum EventType {
@@ -25,7 +26,7 @@ export enum EventType {
   Trace = 'Trace'
 }
 
-const Timeline: React.FC<TimelineProps> = ({ events, onEventHover }) => { // Changed from bars to events
+const Timeline: React.FC<TimelineProps> = ({ events, onEventHover, onEventClick }) => { // Changed from bars to events
   
   const theme = useTheme(); // Get the current theme
 
@@ -149,6 +150,7 @@ const Timeline: React.FC<TimelineProps> = ({ events, onEventHover }) => { // Cha
               console.log('Log event hover:', id, 'Original event.id:', Number(event.id));
               onEventHover(Number(id));
             }}
+            onClick={() => onEventClick(event.id)}
           />
         );
       }
@@ -172,6 +174,10 @@ const Timeline: React.FC<TimelineProps> = ({ events, onEventHover }) => { // Cha
           onHover={(id) => {
             console.log('Trace event hover:', id, 'Original event.id:', Number(event.id));
             onEventHover(Number(id));
+          }}
+          onClick={(id) => {
+            console.log('Trace event clicked:', id);
+            onEventClick(id);
           }}
         />
       );

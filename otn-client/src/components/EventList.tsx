@@ -156,6 +156,24 @@ const InternalEventList: React.FC = () => {
       setHighlightedEventId(eventId);
     };
 
+    const handleEventExpand = (eventId: number) => {
+        console.log('Event expand clicked:', eventId);
+        
+        // Debug: Log all row IDs
+        const allRows = table.getRowModel().rows;
+        console.log('Available row IDs:', allRows.map(row => row.id));
+        
+        // Try finding the row by matching the event ID
+        const row = allRows.find(row => row.original.id === eventId);
+        
+        if (row) {
+            console.log('Found row:', row);
+            handleRowClick(row.original, row);
+        } else {
+            console.log('Row not found for event ID:', eventId);
+        }
+    };
+
     const tableOptions: MRT_TableOptions<Event> = {
 		columns,
 		data: flatData,
@@ -292,6 +310,7 @@ const InternalEventList: React.FC = () => {
                         <Timeline 
                             events={traceEvents} 
                             onEventHover={handleEventHover}
+                            onEventClick={handleEventExpand}
                         />
                     </div>
                 </Paper>

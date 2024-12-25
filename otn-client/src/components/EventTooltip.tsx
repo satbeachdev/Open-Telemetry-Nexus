@@ -7,6 +7,7 @@ interface EventTooltipProps {
   style?: React.CSSProperties;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
+  onClick?: () => void;
 }
 
 const EventTooltip: React.FC<EventTooltipProps> = ({ 
@@ -14,7 +15,8 @@ const EventTooltip: React.FC<EventTooltipProps> = ({
   children, 
   style,
   onMouseEnter,
-  onMouseLeave 
+  onMouseLeave,
+  onClick
 }) => {
   const [showTooltip, setShowTooltip] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -61,6 +63,7 @@ const EventTooltip: React.FC<EventTooltipProps> = ({
         onMouseLeave?.();
       }}
       onMouseMove={handleMouseMove}
+      onClick={onClick}
     >
       {showTooltip && (
         <Box

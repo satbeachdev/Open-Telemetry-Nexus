@@ -14,6 +14,7 @@ interface TraceEventBarProps {
   offset: number;
   duration: number;
   onHover: (eventId: number | null) => void;
+  onClick: (eventId: number) => void;
 }
 
 const TraceEventBar: React.FC<TraceEventBarProps> = ({
@@ -27,19 +28,15 @@ const TraceEventBar: React.FC<TraceEventBarProps> = ({
   textColor,
   offset,
   duration,
-  onHover
+  onHover,
+  onClick
 }) => {
   return (
     <EventTooltip 
       title={`@${TimeFormatter.FormatTime(offset)} for ${TimeFormatter.FormatTime(duration)}: ${message}`}
-      onMouseEnter={() => {
-        console.log('TraceEventBar hover enter:', eventId);
-        onHover(eventId);
-      }}
-      onMouseLeave={() => {
-        console.log('TraceEventBar hover leave:', eventId);
-        onHover(null);
-      }}
+      onMouseEnter={() => onHover(eventId)}
+      onMouseLeave={() => onHover(null)}
+      onClick={() => onClick(eventId)}
       style={{
         position: 'absolute',
         left,
