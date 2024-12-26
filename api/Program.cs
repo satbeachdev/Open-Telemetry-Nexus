@@ -19,6 +19,7 @@ builder.Services.AddTransient<IWebRequestHandler, GetUniqueAttributes>();
 
 builder.Services.AddTransient<IEventService, EventService>();
 builder.Services.AddTransient<IEventRepository, EventRepository>();
+builder.Services.AddTransient<IFilterRepository, FilterRepository>();
 
 builder.Services.AddCors(options =>
 {

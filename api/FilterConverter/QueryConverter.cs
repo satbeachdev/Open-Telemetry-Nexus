@@ -14,6 +14,6 @@ public static class QueryConverter
 
         Console.WriteLine($"Parsed query = {parsedQuery}");
         
-        return $"SELECT e.* FROM events e INNER JOIN eventattributes ea ON e.id = ea.eventid WHERE {parsedQuery};";
+        return $"SELECT e.* FROM events e WHERE {parsedQuery};";
     }
 }

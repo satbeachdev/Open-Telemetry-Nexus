@@ -8,7 +8,7 @@ using Attribute = api.Models.OpenTelemetry.Attribute;
 
 namespace api.Services;
 
-public class EventService(IConfiguration config, IEventRepository eventRepository, ILogger<EventService> logger) : IEventService
+public class EventService(IConfiguration config, IEventRepository eventRepository, IFilterRepository filterRepository, ILogger<EventService> logger) : IEventService
 {
     private readonly IConfiguration _config = config;
     private readonly ILogger<EventService> _logger = logger;
@@ -39,6 +39,21 @@ public class EventService(IConfiguration config, IEventRepository eventRepositor
 
             var where = QueryConverter.ToPostgresSql(filter, uniqueNames);
 
+            // Only save filters that can be parsed
+            if (!string.IsNullOrWhiteSpace(where))
+            {
+                var filterId = await filterRepository.GetFilterIdByExpression(filter, connection);
+                
+                if (filterId == -1)
+                {
+                    await filterRepository.Create(new Filter() { Text = filter, LastUsed = DateTime.Now }, connection);
+                }
+                else
+                {
+                    await filterRepository.Update(new Filter() { Id = filterId, LastUsed = DateTime.Now }, connection);
+                }
+            }
+            
             events = await eventRepository.Load(where, skip, limit, connection);
         }
         else

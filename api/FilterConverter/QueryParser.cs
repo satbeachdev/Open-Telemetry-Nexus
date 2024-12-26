@@ -77,11 +77,11 @@ public static class QueryParser
                 // Numeric vs text handling
                 if (condition.Value is double)
                 {
-                    whereClause = $"(ea.attributes->'{jsonKey}')::numeric {GetOperator(condition.Operator)} {condition.Value}";
+                    whereClause = $"(e.attributes->'{jsonKey}')::numeric {GetOperator(condition.Operator)} {condition.Value}";
                 }
                 else
                 {
-                    whereClause = $"(ea.attributes->>'{jsonKey}') {GetOperator(condition.Operator)} '{condition.Value}'";
+                    whereClause = $"(e.attributes->>'{jsonKey}') {GetOperator(condition.Operator)} '{condition.Value}'";
                 }
             }
             else
