@@ -7,7 +7,7 @@ using Npgsql;
 
 namespace api.Repositories;
 
-public class EventRepository : IEventRepository
+public class EventRepository : RepositoryBase<Event>, IEventRepository
 {
     private const string InsertCommand = @"INSERT INTO Events (trace_id, parent_span_id, span_id, message, start_timestamp, end_timestamp, duration, is_trace, service_name) VALUES (:trace_id, :parent_span_id, :span_id, :message, :start_timestamp, :end_timestamp, :duration, :is_trace, :service_name) RETURNING id;";
     
@@ -41,22 +41,7 @@ public class EventRepository : IEventRepository
 
     public async Task<(IEnumerable<Event> Events, int Count)> Load(int skip, int limit, NpgsqlConnection connection)
     {
-        SqlMapper.AddTypeMap(typeof(DateTime), DbType.DateTime2);
-        SqlMapper.SetTypeMap(
-            typeof(Event),
-            new CustomPropertyTypeMap(
-                typeof(Event),
-                (type, columnName) =>
-                {
-                    // Check for [Column] attribute for custom mapping
-                    var property = type.GetProperties().FirstOrDefault(prop =>
-                        prop.GetCustomAttributes(false)
-                            .OfType<ColumnAttribute>()
-                            .Any(attr => attr.Name == columnName));
-
-                    // If no custom mapping found, fallback to default property name match
-                    return property ?? type.GetProperty(columnName, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
-                }));
+        SetTypeMap();
         
         var rows = await connection.QueryAsync<Event>($"SELECT * FROM Events ORDER BY start_timestamp DESC OFFSET {skip} LIMIT {limit};");
 
@@ -64,23 +49,8 @@ public class EventRepository : IEventRepository
     }    
     public async Task<(IEnumerable<Event> Events, int Count)> Load(string whereClause, int skip, int limit, NpgsqlConnection connection)
     {
-        SqlMapper.AddTypeMap(typeof(DateTime), DbType.DateTime2);
-        SqlMapper.SetTypeMap(
-            typeof(Event),
-            new CustomPropertyTypeMap(
-                typeof(Event),
-                (type, columnName) =>
-                {
-                    // Check for [Column] attribute for custom mapping
-                    var property = type.GetProperties().FirstOrDefault(prop =>
-                        prop.GetCustomAttributes(false)
-                            .OfType<ColumnAttribute>()
-                            .Any(attr => attr.Name == columnName));
-
-                    // If no custom mapping found, fallback to default property name match
-                    return property ?? type.GetProperty(columnName, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
-                }));
-
+        SetTypeMap();
+        
         var rows = await connection.QueryAsync<Event>(whereClause);
 
         return (rows, rows.Count());

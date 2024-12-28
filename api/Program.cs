@@ -16,9 +16,11 @@ builder.Services.AddTransient<IWebRequestHandler<string, int, int>, FilterEvents
 builder.Services.AddTransient<IWebRequestHandler<string>, GetTraceEvents>();
 builder.Services.AddTransient<IWebRequestHandler<int>, GetEventAttributes>();
 builder.Services.AddTransient<IWebRequestHandler, GetUniqueAttributes>();
+builder.Services.AddTransient<IGetAllFiltersHandler, GetFilters>();
 
 builder.Services.AddTransient<IEventService, EventService>();
 builder.Services.AddTransient<IEventRepository, EventRepository>();
+builder.Services.AddTransient<IFilterService, FilterService>();
 builder.Services.AddTransient<IFilterRepository, FilterRepository>();
 
 builder.Services.AddCors(options =>
@@ -43,8 +45,9 @@ app.MapPost("/v1/traces", ([FromBody] TraceMessage message, IOpenTelemetryHandle
 app.MapGet("/allevents", async (HttpContext ctx, int skip, int limit, [FromServices]IWebRequestHandler<int, int> getEvents) => await getEvents.Handle(ctx, skip, limit));
 app.MapGet("/events", async (HttpContext ctx, string filter,int skip, int limit, [FromServices]IWebRequestHandler<string, int, int> filterEvents) => await filterEvents.Handle(ctx, filter,skip, limit));
 app.MapGet("/events/{eventId:int}/attributes", async (HttpContext ctx, [FromRoute] int eventId, [FromServices]IWebRequestHandler<int> getEventAttributes) => await getEventAttributes.Handle(ctx, eventId));
-app.MapGet("/events/{traceId}/events", async (HttpContext ctx, [FromRoute] string traceId, [FromServices]IWebRequestHandler<string> getTraceEvents) => await getTraceEvents.Handle(ctx, traceId));
+app.MapGet("/traces/{traceId}/events", async (HttpContext ctx, [FromRoute] string traceId, [FromServices]IWebRequestHandler<string> getTraceEvents) => await getTraceEvents.Handle(ctx, traceId));
 app.MapGet("/events/attribute-names", async (HttpContext ctx, [FromServices]IWebRequestHandler getUniqueAttributes) => await getUniqueAttributes.Handle(ctx));
+app.MapGet("/filters", async (HttpContext ctx, int? skip, int? limit, [FromServices]IGetAllFiltersHandler getFilters) => await getFilters.Handle(ctx, skip, limit));
 
 app.UseMiddleware<GzipDecompressionMiddleware>();
 //app.UseMiddleware<LogJsonRequestBodyMiddleware>();

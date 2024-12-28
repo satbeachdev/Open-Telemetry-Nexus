@@ -1,10 +1,13 @@
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Data;
+using System.Reflection;
 using api.Models;
 using Dapper;
 using Npgsql;
 
 namespace api.Repositories;
 
-public class FilterRepository : IFilterRepository
+public class FilterRepository : RepositoryBase<Filter>, IFilterRepository
 {
     private const string InsertCommand = @"INSERT INTO Filters (filter, last_used) VALUES (:filter, :last_used) RETURNING id;";
     private const string UpdateCommand = @"UPDATE Filters SET last_used = @lastUsed WHERE id = @id";
@@ -83,6 +86,8 @@ public class FilterRepository : IFilterRepository
     public async Task<IEnumerable<Filter>> GetAll(NpgsqlConnection connection)
     {
         IEnumerable<Filter> filters = [];
+        
+        SetTypeMap();
         
         try
         {

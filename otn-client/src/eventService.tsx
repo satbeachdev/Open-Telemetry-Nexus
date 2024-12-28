@@ -41,7 +41,7 @@ class EventService {
   }
 
   static async LoadTraceEvents(traceId: string): Promise<TraceEvent[]> {
-    const response = await axios.get(`http://localhost:8000/events/${traceId}/events`);
+    const response = await axios.get(`http://localhost:8000/traces/${traceId}/events`);
     return response.data.map((event: any) => ({
       ...event,
       startTime: ZonedDateTime.parse(event.startTime),
@@ -87,6 +87,16 @@ class EventService {
     const totalCount = parseInt(response.headers['x-total-count'] || '0');
     console.log('x-total-count = ' + totalCount);
     return { data: response.data, count: totalCount };
+  }
+
+  static async LoadPredefinedFilters(): Promise<string[]> {
+    try {
+        const response = await axios.get('http://localhost:8000/filters'); 
+        return response.data;
+    } catch (error) {
+        console.error('Failed to load predefined filters:', error);
+        return [];
+    }
   }
 }
 
