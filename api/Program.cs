@@ -30,7 +30,7 @@ builder.Services.AddCors(options =>
             .WithOrigins("http://localhost:3000")
             .AllowAnyMethod()
             .AllowAnyHeader()
-            .AllowCredentials()
+            //.AllowCredentials()
             .WithExposedHeaders("x-total-count"));
 });
 

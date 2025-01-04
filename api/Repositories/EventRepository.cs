@@ -9,9 +9,9 @@ namespace api.Repositories;
 
 public class EventRepository : RepositoryBase<Event>, IEventRepository
 {
-    private const string InsertCommand = @"INSERT INTO Events (trace_id, parent_span_id, span_id, message, start_timestamp, end_timestamp, duration, is_trace, service_name) VALUES (:trace_id, :parent_span_id, :span_id, :message, :start_timestamp, :end_timestamp, :duration, :is_trace, :service_name) RETURNING id;";
-    
-    public async Task<object?> Insert(Event @event, NpgsqlConnection connection)
+    private const string InsertCommand = @"INSERT INTO Events (trace_id, parent_span_id, span_id, message, start_timestamp, end_timestamp, duration, is_trace, service_name, attributes) VALUES (:trace_id, :parent_span_id, :span_id, :message, :start_timestamp, :end_timestamp, :duration, :is_trace, :service_name, :attributes) RETURNING id;";
+
+    public async Task<object?> Insert(EventWithAttributes @event, NpgsqlConnection connection)
     {
         object? id = default;
         
@@ -28,6 +28,7 @@ public class EventRepository : RepositoryBase<Event>, IEventRepository
             command.Parameters.AddWithValue("duration", @event.DurationMilliseconds);
             command.Parameters.AddWithValue("is_trace", @event.IsTrace);
             command.Parameters.AddWithValue("service_name", @event.ServiceName);
+            command.Parameters.AddWithValue("attributes", NpgsqlTypes.NpgsqlDbType.Jsonb, @event.Attributes);
 
             id = await command.ExecuteScalarAsync();
         } 
@@ -46,7 +47,8 @@ public class EventRepository : RepositoryBase<Event>, IEventRepository
         var rows = await connection.QueryAsync<Event>($"SELECT * FROM Events ORDER BY start_timestamp DESC OFFSET {skip} LIMIT {limit};");
 
         return (rows, await connection.ExecuteScalarAsync<int>("SELECT COUNT(id) FROM Events"));
-    }    
+    }  
+    
     public async Task<(IEnumerable<Event> Events, int Count)> Load(string whereClause, int skip, int limit, NpgsqlConnection connection)
     {
         SetTypeMap();

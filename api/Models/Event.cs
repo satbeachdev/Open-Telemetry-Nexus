@@ -34,3 +34,8 @@ public class Event
     
     public bool IsTrace { get; set; }
 }
+
+public class EventWithAttributes : Event
+{
+    public string? Attributes { get; set; }
+}

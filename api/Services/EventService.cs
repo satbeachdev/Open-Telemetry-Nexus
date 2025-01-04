@@ -1,4 +1,6 @@
+using System.Dynamic;
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 using api.FilterConverter;
 using api.Models;
 using api.Models.OpenTelemetry;
@@ -64,33 +66,16 @@ public class EventService(IConfiguration config, IEventRepository eventRepositor
         return events;
     }    
     
-    public async Task Save(LogMessage message)
+    public async Task Save2(LogMessage message)
     {
-        await using var connection = new NpgsqlConnection(_connectionString);
-        await connection.OpenAsync();
-
-        foreach (var logRecord in message.resourceLogs.SelectMany(resourceLog => resourceLog.scopeLogs.SelectMany(scopeLog => scopeLog.logRecords)))
+        try
         {
-            var timestamp = TimeConverter.EpochToDateTime(long.Parse(logRecord.timeUnixNano));
-            
-            var @event = new Event()
+            await using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+
+            foreach (var logRecord in message.resourceLogs.SelectMany(resourceLog => resourceLog.scopeLogs.SelectMany(scopeLog => scopeLog.logRecords)))
             {
-                TraceId = logRecord.traceId,
-                ParentSpanId = null,
-                SpanId = logRecord.spanId,
-                Message = logRecord.body.stringValue,
-                ServiceName = (string?)(message.resourceLogs[0].resource.attributes.SingleOrDefault(a => a.Key == "service.name"))?.Value ?? string.Empty,
-                StartTime = timestamp,
-                EndTime = timestamp,
-                DurationMilliseconds = 0,
-                IsTrace = false
-            };
-            
-            var id = await eventRepository.Insert(@event, connection);
-        
-            if (id != null)
-            {
-                var eventId = (int)id;
+                var timestamp = TimeConverter.EpochToDateTime(long.Parse(logRecord.timeUnixNano));
                 
                 var attributes = new Dictionary<string, object>()
                 {
@@ -102,66 +87,153 @@ public class EventService(IConfiguration config, IEventRepository eventRepositor
                 {
                     attributes.Add(attrib.Key, attrib.Value);
                 }
-
-                //await eventAttributeRepository.Insert(attributes, eventId, connection);
+                
+                var @event = new EventWithAttributes()
+                {
+                    TraceId = logRecord.traceId,
+                    ParentSpanId = null,
+                    SpanId = logRecord.spanId,
+                    Message = logRecord.body.stringValue,
+                    ServiceName = (string?)(message.resourceLogs[0].resource.attributes.SingleOrDefault(a => a.Key == "service.name"))?.Value ?? string.Empty,
+                    StartTime = timestamp,
+                    EndTime = timestamp,
+                    DurationMilliseconds = 0,
+                    IsTrace = false,
+                    Attributes = JsonSerializer.Serialize(ConvertToDynamic(attributes))
+                };
+                
+                await eventRepository.Insert(@event, connection);
             }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
+    }
+
+    public async Task Save(LogMessage message)
+    {
+        try
+        {
+            await using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+            
+            foreach (var resourceLog in message.resourceLogs)
+            {
+                var attributes = new Dictionary<string, object>();
+
+                AddResourceAttributes(resourceLog, attributes);
+
+                foreach (var scopeLog in resourceLog.scopeLogs)
+                {
+                    AddScopeAttributes(scopeLog, attributes);
+
+                    foreach (var logRecord in scopeLog.logRecords)
+                    {
+                        var timestamp = TimeConverter.EpochToDateTime(long.Parse(logRecord.timeUnixNano));
+
+                        foreach (var attrib in logRecord.attributes)
+                        {
+                            attributes.TryAdd(attrib.Key, attrib.Value);
+                        }
+                
+                        var @event = new EventWithAttributes()
+                        {
+                            TraceId = logRecord.traceId,
+                            ParentSpanId = null,
+                            SpanId = logRecord.spanId,
+                            Message = logRecord.body.stringValue,
+                            ServiceName = (string?)(message.resourceLogs[0].resource.attributes.SingleOrDefault(a => a.Key == "service.name"))?.Value ?? string.Empty,
+                            StartTime = timestamp,
+                            EndTime = timestamp,
+                            DurationMilliseconds = 0,
+                            IsTrace = false,
+                            Attributes = JsonSerializer.Serialize(ConvertToDynamic(attributes))
+                        };
+                        
+                        await eventRepository.Insert(@event, connection);
+                    }
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
         }
     }
     
+    
     public async Task Save(TraceMessage message)
     {
-        await using var connection = new NpgsqlConnection(_connectionString);
-        await connection.OpenAsync();
-
-        var attributes = new Dictionary<string, object>();
-        
-        foreach (var resourceSpan in message.resourceSpans)
+        try
         {
-            AddResourceAttributes(resourceSpan, attributes);
-
-            foreach (var scopeSpan in resourceSpan.scopeSpans)
+            await using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+            
+            foreach (var resourceSpan in message.resourceSpans)
             {
-                AddScopeAttributes(scopeSpan, attributes);
+                var attributes = new Dictionary<string, object>();
 
-                foreach (var span in scopeSpan.spans)
+                AddResourceAttributes(resourceSpan, attributes);
+
+                foreach (var scopeSpan in resourceSpan.scopeSpans)
                 {
-                    var startTime = TimeConverter.EpochToDateTime(long.Parse(span.startTimeUnixNano));
-                    var endTime = TimeConverter.EpochToDateTime(long.Parse(span.endTimeUnixNano));
+                    AddScopeAttributes(scopeSpan, attributes);
 
-                    var @event = new Event()
+                    foreach (var span in scopeSpan.spans)
                     {
-                        TraceId = span.traceId,
-                        ParentSpanId = span.parentSpanId,
-                        SpanId = span.spanId,
-                        Message = span.name,
-                        ServiceName = GetServiceNameFromAttributes(attributes),
-                        StartTime = startTime,
-                        EndTime = endTime,
-                        DurationMilliseconds = (endTime - startTime).TotalMilliseconds,
-                        IsTrace = true
-                    };
-                    
-                    var id = await eventRepository.Insert(@event, connection);
-                    
-                    if (id != null)
-                    {
-                        var eventId = (int)id;
-                    
-                        attributes.Add("kind", span.kind);
+                        var startTime = TimeConverter.EpochToDateTime(long.Parse(span.startTimeUnixNano));
+                        var endTime = TimeConverter.EpochToDateTime(long.Parse(span.endTimeUnixNano));
+
+                        attributes.TryAdd("kind", span.kind);
 
                         if (span.attributes != null)
                         {
                             foreach (var attribute in span.attributes)
                             {
-                                attributes.Add(attribute.Key, attribute.Value);
+                                attributes.TryAdd(attribute.Key, attribute.Value);
                             }
                         }
 
-                        //await eventAttributeRepository.Insert(attributes, eventId, connection);
+                        var @event = new EventWithAttributes()
+                        {
+                            TraceId = span.traceId,
+                            ParentSpanId = span.parentSpanId,
+                            SpanId = span.spanId,
+                            Message = span.name,
+                            ServiceName = GetServiceNameFromAttributes(attributes),
+                            StartTime = startTime,
+                            EndTime = endTime,
+                            DurationMilliseconds = (endTime - startTime).TotalMilliseconds,
+                            IsTrace = true,
+                            Attributes = JsonSerializer.Serialize(ConvertToDynamic(attributes))
+                        };
+                        
+                        await eventRepository.Insert(@event, connection);
                     }
                 }
             }
         }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
+    }
+    
+    static dynamic ConvertToDynamic(Dictionary<string, object> dictionary)
+    {
+        var expando = new ExpandoObject();
+        var expandoDict = (IDictionary<string, object>)expando;
+
+        foreach (var kvp in dictionary)
+        {
+            expandoDict[kvp.Key] = kvp.Value;
+        }
+
+        return expando;
     }
     
     public async Task<IEnumerable<string>> GetUniqueNames()
@@ -183,8 +255,8 @@ public class EventService(IConfiguration config, IEventRepository eventRepositor
         
         return serviceName;
     }
-    // Span Attributes
     
+    // Span Attributes
     private void AddResourceAttributes(ResourceSpan resourceSpan, Dictionary<string, object> attributes)
     {
         foreach (var attribute in resourceSpan.resource.attributes)

@@ -3,6 +3,7 @@ using System.Data;
 using System.Reflection;
 using api.Models;
 using Dapper;
+using InterpolatedSql.Dapper;
 using Npgsql;
 
 namespace api.Repositories;
@@ -18,7 +19,7 @@ public class FilterRepository : RepositoryBase<Filter>, IFilterRepository
         try
         {
             await using var command = new NpgsqlCommand(InsertCommand, connection);
-
+            
             command.Parameters.AddWithValue("filter", filter.Text!);
             command.Parameters.AddWithValue("last_used", filter.LastUsed);
 
@@ -101,15 +102,17 @@ public class FilterRepository : RepositoryBase<Filter>, IFilterRepository
         return await Task.FromResult(filters);
     }
 
-    public async Task<int> GetFilterIdByExpression(string filter, NpgsqlConnection connection)
+    public async Task<int> GetFilterIdByExpression(string filterText, NpgsqlConnection connection)
     {
         var filterId = -1;
         
         try
         {
-            var filters = await connection.QueryAsync<Filter>($"SELECT * FROM Filters WHERE filter = '{filter}'");
+            var query = connection.QueryBuilder($"SELECT * FROM Filters WHERE filter = '{filterText}'").Build();
+            
+            var filter = await query.QuerySingleOrDefaultAsync<Filter>();
 
-            filterId = filters?.SingleOrDefault()?.Id ?? -1;
+            filterId = filter?.Id ?? -1;
         } 
         catch (Exception e)
         {
