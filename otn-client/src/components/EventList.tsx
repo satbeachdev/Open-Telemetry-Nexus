@@ -18,10 +18,16 @@ type EventQueryResult = {
 	nextPage: number;
 };
 
+interface EventRowState {
+    expanded: boolean;
+    attributes?: any[];
+    loading: boolean;
+}
+
 const InternalEventList: React.FC = () => {
 	const [tableHeight, setTableHeight] = useState('100vh');
     const [traceEvents, setTraceEvents] = useState<TraceEvent[]>([]); 
-    const [eventAttributes, setEventAttributes] = useState<Attribute[]>([]);
+    const [eventAttributes, setEventAttributes] = useState<Map<number, Attribute[]>>(new Map());
     const [topPaneSize, setTopPaneSize] = useState<number>(0)
     const allotmentRef = useRef<AllotmentHandle>(null);
     const theme = useTheme();
@@ -29,6 +35,7 @@ const InternalEventList: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true);
     const [highlightedEventId, setHighlightedEventId] = useState<Number | null>(null);
+    const [rowStates, setRowStates] = useState<Map<string, EventRowState>>(new Map());
 
     const { data, fetchNextPage, isError, isFetching, isLoading, refetch } = useInfiniteQuery<EventQueryResult>({
 		queryKey: ['events', searchTerm],
@@ -126,31 +133,25 @@ const InternalEventList: React.FC = () => {
 		[data]
 	);
 
-    const handleRowClick = (row: Event, tableRow: MRT_Row<Event>) => {
+    const handleRowClick = async (row: Event, tableRow: MRT_Row<Event>) => {
         if (row.traceId) {
-          EventService.LoadTraceEvents(row.traceId)
-            .then(events => {
-                console.log('Trace Events:', events.map(e => ({ id: e.id, message: e.message })));
-                setTraceEvents(events);
-                setTopPaneSize(240);
-            })
-            .catch(error => {
-              console.error('Error fetching trace events:', error);
-            });
+            EventService.LoadTraceEvents(row.traceId)
+                .then(events => {
+                    setTraceEvents(events);
+                    setTopPaneSize(240);
+                })
+                .catch(error => {
+                    console.error('Error fetching trace events:', error);
+                });
         }
 
-        if (row.id) {
-          EventService.LoadEventAttributes(row.id)
-            .then(attributes => {
-                setEventAttributes(attributes);
-            })
-            .catch(error => {
-              console.error('Error fetching trace events:', error);
-            });
+        if (row.id && !eventAttributes.has(row.id)) {
+            const attributes = await EventService.LoadEventAttributes(row.id);
+            setEventAttributes(prev => new Map(prev).set(row.id, attributes));
         }
 
         tableRow.toggleExpanded();
-      };
+    };
       
     const handleEventHover = (eventId: Number | null) => {
       setHighlightedEventId(eventId);
@@ -235,14 +236,14 @@ const InternalEventList: React.FC = () => {
             <Box sx={{ padding: '1rem' }}>
                 <Table size="small" sx={{ '& td, & th': { border: 'none' } }}>
                     <TableBody>
-                        {eventAttributes.map((attr, index) => (
+                        {eventAttributes.get(row.original.id)?.map((attr, index) => (
                             <TableRow key={index}>
                                 <TableCell 
                                     component="th" 
                                     scope="row" 
                                     sx={{ 
                                         padding: '4px 16px 4px 0',
-                                        verticalAlign: 'top' // Align to top for multiline content
+                                        verticalAlign: 'top'
                                     }}
                                 >
                                     {attr.name}
@@ -250,14 +251,14 @@ const InternalEventList: React.FC = () => {
                                 <TableCell 
                                     sx={{ 
                                         padding: '4px 0',
-                                        whiteSpace: 'pre-wrap', // Preserve line breaks
-                                        wordBreak: 'break-word', // Break long words if needed
+                                        whiteSpace: 'pre-wrap',
+                                        wordBreak: 'break-word',
                                         ...(attr.name === 'exception.stacktrace' && {
                                             backgroundColor: 'error.main',
                                             color: 'white',
                                             padding: '8px 12px',
                                             borderRadius: '4px',
-                                            fontFamily: 'monospace' // Optional: better for error messages
+                                            fontFamily: 'monospace'
                                         })
                                     }}
                                 >
@@ -291,8 +292,39 @@ const InternalEventList: React.FC = () => {
     const table = useMaterialReactTable(tableOptions);
     
     const handleSearch = (newSearchTerm: string) => {
+        // Clear all attributes
+        setEventAttributes(new Map());
+        
+        // Clear expanded states by resetting the table state
+        table.resetExpanded();
+        
         setSearchTerm(newSearchTerm);
         refetch();
+    };
+
+    const toggleRow = async (eventId: string) => {
+        const currentState = rowStates.get(eventId) || { expanded: false, loading: false };
+        const newStates = new Map(rowStates);
+        
+        if (!currentState.expanded) {
+            if (!currentState.attributes) {
+                newStates.set(eventId, { ...currentState, expanded: true, loading: true });
+                setRowStates(newStates);
+                
+                const attributes = await EventService.LoadEventAttribute(eventId);
+                newStates.set(eventId, { 
+                    expanded: true, 
+                    attributes: attributes,
+                    loading: false 
+                });
+            } else {
+                newStates.set(eventId, { ...currentState, expanded: true });
+            }
+        } else {
+            newStates.set(eventId, { ...currentState, expanded: false });
+        }
+        
+        setRowStates(newStates);
     };
 
     return (

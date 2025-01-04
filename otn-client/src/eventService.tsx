@@ -28,6 +28,8 @@ export interface Attribute {
 }
 
 class EventService {
+  private static eventAttributes: Map<string, any[]> = new Map();
+
   static async LoadEvents(skip: number, limit: number): Promise<{ data: Event[], count: number }> {
     const response = await axios.get(`http://localhost:8000/allevents?skip=${skip}&limit=${limit}`);
     const totalCount = response.headers['x-total-count'] || '0';
@@ -96,6 +98,33 @@ class EventService {
     } catch (error) {
         console.error('Failed to load predefined filters:', error);
         return [];
+    }
+  }
+
+  static async LoadEventAttribute(eventId: string): Promise<any[]> {
+    // Check if we already have attributes for this event
+    if (this.eventAttributes.has(eventId)) {
+        return this.eventAttributes.get(eventId)!;
+    }
+
+    try {
+        const response = await fetch(`/api/events/${eventId}/attributes`);
+        const attributes = await response.json();
+        // Store attributes for this specific event
+        this.eventAttributes.set(eventId, attributes);
+        return attributes;
+    } catch (error) {
+        console.error('Error loading event attributes:', error);
+        return [];
+    }
+  }
+
+  // Change to static method and use EventService.eventAttributes
+  static clearEventAttributes(eventId?: string) {
+    if (eventId) {
+        EventService.eventAttributes.delete(eventId);
+    } else {
+        EventService.eventAttributes.clear();
     }
   }
 }
