@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <InvariantGlobalization>true</InvariantGlobalization>
+        <RootNamespace>api</RootNamespace>
+    </PropertyGroup>
+    
+    <ItemGroup>
+        <PackageReference Include="Dapper" Version="2.1.35" />
+        <PackageReference Include="InterpolatedSql.Dapper" Version="2.3.0" />
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.8" />
+        <PackageReference Include="Npgsql" Version="8.0.3" />
+        <PackageReference Include="Superpower" Version="3.0.0" />
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.7.1" />
+    </ItemGroup>
+    
+    <ItemGroup>
+      <Compile Remove="Services\IEventAttributeService.cs" />
+      <Compile Remove="Services\EventAttributeService.cs" />
+      <Compile Remove="Repositories\IEventAttributeRepository.cs" />
+      <Compile Remove="Repositories\EventAttributeRepository.cs" />
+    </ItemGroup>
+
+</Project>
