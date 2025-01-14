@@ -58,7 +58,7 @@ class EventService {
 
   static async LoadUniqueAttributeNames2(): Promise<string[]> {
 
-    const tracer = trace.getTracer("ot-nexus");
+    const tracer = trace.getTracer("manta");
     
     return tracer.startActiveSpan('make API call', async (span: Span) => {
       try {

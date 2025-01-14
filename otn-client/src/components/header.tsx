@@ -3,7 +3,7 @@ import React from 'react';
 const Header: React.FC = () => {
   return (
     <header>
-      <h1>OpenTelemetry Nexus</h1>
+      <h1>Manta</h1>
     </header>
   );
 };

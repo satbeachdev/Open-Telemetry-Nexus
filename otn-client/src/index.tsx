@@ -4,7 +4,7 @@ import './app.css';
 import App from './App';
 //import { AddOpenTelemetry } from "./addOpenTelemetry";
 
-//AddOpenTelemetry("ot-nexus");
+//AddOpenTelemetry("manta");
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 root.render(

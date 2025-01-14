@@ -65,7 +65,7 @@ const App: React.FC = () => {
                 <MenuIcon fontSize="small" />
               </IconButton>
               <Typography variant="subtitle1" noWrap component="div" sx={{ flexGrow: 1 }}>
-                OpenTelemetry Nexus
+                Manta
               </Typography>
               <IconButton sx={{ ml: 1, padding: '4px' }} onClick={toggleTheme} color="inherit">
                 {theme.palette.mode === 'dark' ? <Brightness7Icon fontSize="small" /> : <Brightness4Icon fontSize="small" />}
