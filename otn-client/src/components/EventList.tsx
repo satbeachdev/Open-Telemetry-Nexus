@@ -33,7 +33,7 @@ const InternalEventList: React.FC = () => {
     const theme = useTheme();
     const [resultCount, setResultCount] = useState<number>(0);
     const [searchTerm, setSearchTerm] = useState('');
-    const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true);
+    const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(false);
     const [highlightedEventId, setHighlightedEventId] = useState<Number | null>(null);
     const [rowStates, setRowStates] = useState<Map<string, EventRowState>>(new Map());
 
