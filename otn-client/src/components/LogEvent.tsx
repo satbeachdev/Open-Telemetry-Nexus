@@ -28,19 +28,29 @@ const LogEvent: React.FC<LogEventProps> = ({ id, index, message, left, top, barH
       onMouseLeave={() => onHover(null)}
       onClick={() => onClick(id)}
     >
-      {index > 1 && (
+      {index > 0 && (
         <span
           style={{ 
-            position: 'absolute', 
+            position: 'absolute',
             fontSize: '9px',
             whiteSpace: 'nowrap',
-            transform: 'translate(-100%, 50%)',
+            left: '50%',
+            transform: 'translate(-50%, -40%)',
+            marginBottom: '3px'
           }}
         >
           {TimeFormatter.FormatTime(offset)}
         </span>
       )}
-      <span className="material-symbols-outlined">
+      <span 
+        className="material-symbols-outlined"
+        style={{
+          fontSize: '16px',
+          position: 'relative',
+          top: '1px',
+          marginTop: '3px'
+        }}
+      >
         chat
       </span>
     </EventTooltip>
