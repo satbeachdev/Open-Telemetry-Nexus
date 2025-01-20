@@ -1,8 +1,8 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { useTheme } from '@mui/material/styles'; // Import useTheme
 import { Duration } from 'js-joda'; // Import js-joda
 import TimelineContainer from './TimelineContainer'; // Import the new component
-import LogEvent from './LogEvent';
+import LogEvent, { ICON_WIDTH } from './LogEvent';
 import { TraceEvent } from '../eventService';
 import TraceEventBar from './TraceEvent';
 
@@ -29,6 +29,7 @@ export enum EventType {
 const Timeline: React.FC<TimelineProps> = ({ events, onEventHover, onEventClick }) => { // Changed from bars to events
   
   const theme = useTheme(); // Get the current theme
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Function to determine if a color is light
   const isLightColor = (color: string) => {
@@ -136,16 +137,25 @@ const Timeline: React.FC<TimelineProps> = ({ events, onEventHover, onEventClick 
       }
 
       if (isLogEvent) {
+        const leftPercentage = parseFloat(left.replace('%', ''));
+        // Only adjust position if it's actually the last event
+        const isLastEvent = index === events.length - 1;
+        const isNearRightEdge = isLastEvent && leftPercentage > 95;
+        
+        // Adjust left position only for the last event if needed
+        const adjustedLeft = isNearRightEdge ? `calc(100% - ${ICON_WIDTH}px)` : left;
+
         return (
           <LogEvent
             key={event.id}
             id={event.id}
             index={index}
             message={event.message}
-            left={left}
+            left={adjustedLeft}
             top={currentTop}
             barHeight={barHeight}
             offset={event.offsetMilliseconds}
+            isNearRightEdge={isNearRightEdge}
             onHover={(id) => {
               console.log('Log event hover:', id, 'Original event.id:', Number(event.id));
               onEventHover(Number(id));
@@ -186,9 +196,10 @@ const Timeline: React.FC<TimelineProps> = ({ events, onEventHover, onEventClick 
 
   return (
     <TimelineContainer 
+      ref={containerRef}
       divisionLines={divisionLines} 
       totalDuration={totalDuration} 
-      height={containerHeight} // Pass the calculated height
+      height={containerHeight}
     >
       {renderEvents()} 
     </TimelineContainer>

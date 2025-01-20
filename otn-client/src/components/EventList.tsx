@@ -4,11 +4,12 @@ import { useInfiniteQuery, InfiniteData } from '@tanstack/react-query';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import EventService, { Event, TraceEvent, Attribute } from '../eventService';
 import TimeFormatter from '../TimeFormatter'
-import { Box, Paper, Typography, useTheme, Table, TableBody, TableCell, TableRow } from '@mui/material'
+import { Box, Paper, Typography, useTheme, Table, TableBody, TableCell, TableRow, IconButton } from '@mui/material'
 import { Allotment, AllotmentHandle } from "allotment"
 import "allotment/dist/style.css"
 import Timeline from './timeline'
 import FilterEvents from './FilterEvents'
+import CloseIcon from '@mui/icons-material/Close'
 
 const ITEMS_PER_PAGE = 50; // Adjust as needed
 const REFRESH_INTERVAL = 5000;
@@ -36,6 +37,7 @@ const InternalEventList: React.FC = () => {
     const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(false);
     const [highlightedEventId, setHighlightedEventId] = useState<Number | null>(null);
     const [rowStates, setRowStates] = useState<Map<string, EventRowState>>(new Map());
+    const timelineRef = useRef<HTMLDivElement>(null);
 
     const { data, fetchNextPage, isError, isFetching, isLoading, refetch } = useInfiniteQuery<EventQueryResult>({
 		queryKey: ['events', searchTerm],
@@ -138,7 +140,6 @@ const InternalEventList: React.FC = () => {
             EventService.LoadTraceEvents(row.traceId)
                 .then(events => {
                     setTraceEvents(events);
-                    setTopPaneSize(240);
                 })
                 .catch(error => {
                     console.error('Error fetching trace events:', error);
@@ -327,18 +328,74 @@ const InternalEventList: React.FC = () => {
         setRowStates(newStates);
     };
 
+    useEffect(() => {
+        if (traceEvents.length > 0 && timelineRef.current) {
+            const calculateSize = () => {
+                if (timelineRef.current) {
+                    const timelineHeight = timelineRef.current.scrollHeight;
+                    // Increased padding from 56 to 76 to add more bottom margin
+                    const totalHeight = timelineHeight + 76; // 24px header + 32px padding + 20px bottom margin
+                    
+                    if (Math.abs(totalHeight - topPaneSize) > 5) {
+                        setTopPaneSize(totalHeight);
+                    }
+                }
+            };
+
+            setTimeout(calculateSize, 100);
+
+            const resizeObserver = new ResizeObserver(() => {
+                setTimeout(calculateSize, 50);
+            });
+            resizeObserver.observe(timelineRef.current);
+
+            return () => {
+                if (timelineRef.current) {
+                    resizeObserver.unobserve(timelineRef.current);
+                }
+            };
+        } else {
+            setTopPaneSize(0);
+        }
+    }, [traceEvents, topPaneSize]);
+
     return (
         <Allotment ref={allotmentRef} vertical defaultSizes={[topPaneSize, -1]}>
             <Allotment.Pane minSize={0}>
                 <Paper sx={{ 
-                    p: 2, 
+                    p: '8px 16px 16px 16px',
                     height: '100%', 
-                    overflow: 'auto',
+                    overflow: 'hidden',
                     backgroundColor: theme.palette.background.default,
-                    display: topPaneSize > 0 ? 'block' : 'none'                    
+                    display: topPaneSize > 0 ? 'block' : 'none',
+                    position: 'relative'
                 }}>
-                    <div style={{ height: topPaneSize, overflow: 'auto' }}>
+                    <Box sx={{ 
+                        display: 'flex', 
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        mb: 1
+                    }}>
                         <Typography variant="h6">Trace Timeline</Typography>
+                        <IconButton 
+                            size="small"
+                            onClick={() => {
+                                setTopPaneSize(0);
+                                setTraceEvents([]);
+                            }}
+                        >
+                            <CloseIcon fontSize="small" />
+                        </IconButton>
+                    </Box>
+
+                    <div 
+                        ref={timelineRef} 
+                        style={{ 
+                            position: 'relative',
+                            height: topPaneSize ? topPaneSize - 76 : 0,
+                            marginBottom: '20px'
+                        }}
+                    >
                         <Timeline 
                             events={traceEvents} 
                             onEventHover={handleEventHover}

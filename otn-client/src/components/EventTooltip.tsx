@@ -1,10 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Box } from '@mui/material';
 
 interface EventTooltipProps {
   title: string;
   children: React.ReactNode;
   style?: React.CSSProperties;
+  placement?: 'left' | 'right';
+  containerRef?: React.RefObject<HTMLElement>;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
   onClick?: () => void;
@@ -14,46 +16,39 @@ const EventTooltip: React.FC<EventTooltipProps> = ({
   title, 
   children, 
   style,
+  placement = 'right',
   onMouseEnter,
   onMouseLeave,
   onClick
 }) => {
   const [showTooltip, setShowTooltip] = useState(false);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [tooltipElement, setTooltipElement] = useState<HTMLDivElement | null>(null);
+  const tooltipRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const adjustPosition = useCallback((x: number, y: number) => {
-    if (!tooltipElement) return { x, y };
-
-    const tooltipWidth = tooltipElement.offsetWidth;
-    const tooltipHeight = tooltipElement.offsetHeight;
-    const windowWidth = window.innerWidth;
-    const windowHeight = window.innerHeight;
-
-    let adjustedX = x + 10;
-    let adjustedY = y - 30;
-
-    // Adjust horizontal position
-    if (adjustedX + tooltipWidth > windowWidth) {
-      adjustedX = x - tooltipWidth - 10;
+  useEffect(() => {
+    if (showTooltip && tooltipRef.current && containerRef.current) {
+      const containerRect = containerRef.current.getBoundingClientRect();
+      const tooltipRect = tooltipRef.current.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+      
+      // If tooltip would overflow right side, force left placement
+      if (containerRect.right + tooltipRect.width > viewportWidth) {
+        tooltipRef.current.style.right = '100%';
+        tooltipRef.current.style.left = 'auto';
+      } else {
+        tooltipRef.current.style.left = '100%';
+        tooltipRef.current.style.right = 'auto';
+      }
     }
-
-    // Adjust vertical position
-    if (adjustedY < 0) {
-      adjustedY = y + 10;
-    }
-
-    return { x: adjustedX, y: adjustedY };
-  }, [tooltipElement]);
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    const { x, y } = adjustPosition(e.clientX, e.clientY);
-    setPosition({ x, y });
-  };
+  }, [showTooltip]);
 
   return (
     <div
-      style={style}
+      ref={containerRef}
+      style={{
+        ...style,
+        position: 'relative'
+      }}
       onMouseEnter={() => {
         setShowTooltip(true);
         onMouseEnter?.();
@@ -62,16 +57,15 @@ const EventTooltip: React.FC<EventTooltipProps> = ({
         setShowTooltip(false);
         onMouseLeave?.();
       }}
-      onMouseMove={handleMouseMove}
       onClick={onClick}
     >
       {showTooltip && (
         <Box
-          ref={setTooltipElement}
+          ref={tooltipRef}
           sx={{
-            position: 'fixed',
-            top: position.y,
-            left: position.x,
+            position: 'absolute',
+            top: '50%',
+            transform: 'translateY(-50%)',
             backgroundColor: 'rgba(0, 0, 0, 0.8)',
             color: 'white',
             padding: '4px 8px',
@@ -79,7 +73,9 @@ const EventTooltip: React.FC<EventTooltipProps> = ({
             fontSize: '12px',
             whiteSpace: 'nowrap',
             zIndex: 9999,
-            pointerEvents: 'none'
+            pointerEvents: 'none',
+            marginLeft: '10px',
+            marginRight: '10px'
           }}
         >
           {title}

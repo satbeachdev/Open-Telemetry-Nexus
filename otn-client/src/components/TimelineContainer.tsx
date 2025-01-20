@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
 import { useTheme } from '@mui/material/styles';
 import TimeFormatter from '../TimeFormatter';
 
@@ -9,11 +9,11 @@ interface TimelineContainerProps {
   height: number;
 }
 
-const TimelineContainer: React.FC<TimelineContainerProps> = ({ divisionLines, totalDuration, children, height }) => {
+const TimelineContainer = forwardRef<HTMLDivElement, TimelineContainerProps>(({ divisionLines, totalDuration, children, height }, ref) => {
   const theme = useTheme();
 
   return (
-    <div className="timeline-container" style={{ position: 'relative', width: '100%', height: `${height}px`, border: '1px solid #ddd' }}>
+    <div ref={ref} className="timeline-container" style={{ position: 'relative', width: '100%', height: `${height}px`, border: '1px solid #ddd', overflow: 'hidden' }}>
       {/* Division Lines */}
       {divisionLines.map((position, index) => (
         <div
@@ -58,6 +58,8 @@ const TimelineContainer: React.FC<TimelineContainerProps> = ({ divisionLines, to
       {children}
     </div>
   );
-};
+});
+
+TimelineContainer.displayName = 'TimelineContainer';
 
 export default TimelineContainer;

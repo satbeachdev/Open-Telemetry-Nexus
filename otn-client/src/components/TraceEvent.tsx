@@ -15,6 +15,7 @@ interface TraceEventBarProps {
   duration: number;
   onHover: (eventId: number | null) => void;
   onClick: (eventId: number) => void;
+  isNearRightEdge?: boolean;
 }
 
 const TraceEventBar: React.FC<TraceEventBarProps> = ({
@@ -29,7 +30,8 @@ const TraceEventBar: React.FC<TraceEventBarProps> = ({
   offset,
   duration,
   onHover,
-  onClick
+  onClick,
+  isNearRightEdge,
 }) => {
   return (
     <div style={{ 
@@ -55,11 +57,19 @@ const TraceEventBar: React.FC<TraceEventBarProps> = ({
         onMouseEnter={() => onHover(eventId)}
         onMouseLeave={() => onHover(null)}
         onClick={() => onClick(eventId)}
+        placement={isNearRightEdge ? "left" : "right"}
         style={{
+          cursor: 'pointer',
+          width: '100%',
           position: 'absolute',
           left,
+          height: `${barHeight}px`,
+        }}
+      >
+        <div style={{
+          position: 'relative',
           width,
-          height: barHeight,
+          height: '100%',
           backgroundColor,
           color: textColor,
           display: 'flex',
@@ -67,12 +77,12 @@ const TraceEventBar: React.FC<TraceEventBarProps> = ({
           padding: '0 4px',
           overflow: 'hidden',
           whiteSpace: 'nowrap',
-          cursor: 'pointer',
           fontSize: '12px',
           borderRadius: '4px',
-        }}
-      >
-        {message}
+          zIndex: 1000,
+        }}>
+          {message}
+        </div>
       </EventTooltip>
     </div>
   );
