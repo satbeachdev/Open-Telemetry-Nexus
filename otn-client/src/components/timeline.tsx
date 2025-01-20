@@ -156,6 +156,7 @@ const Timeline: React.FC<TimelineProps> = ({ events, onEventHover, onEventClick 
             barHeight={barHeight}
             offset={event.offsetMilliseconds}
             isNearRightEdge={isNearRightEdge}
+            severity={event.severity}
             onHover={(id) => {
               console.log('Log event hover:', id, 'Original event.id:', Number(event.id));
               onEventHover(Number(id));

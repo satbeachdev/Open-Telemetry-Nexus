@@ -14,6 +14,8 @@ public class Event
     [Column("span_id")]
     public string? SpanId { get; init; }
     public string? Message { get; init; }
+
+    public int Severity { get; init; } = 9; // Info
     
     [Column("service_name")]
     public string? ServiceName { get; set; }

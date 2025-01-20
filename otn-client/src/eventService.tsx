@@ -10,6 +10,7 @@ export interface Event {
   traceId: string;
   spanId: string;
   durationMilliseconds: number;
+  severity: number;
 }
 
 export interface TraceEvent {
@@ -20,6 +21,7 @@ export interface TraceEvent {
   spanId: string;
   offsetMilliseconds: number;
   durationMilliseconds: number;
+  severity: number;
 }
 
 export interface Attribute {

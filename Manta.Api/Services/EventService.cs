@@ -1,14 +1,10 @@
 using System.Dynamic;
-using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Manta.Api.FilterConverter;
 using Manta.Api.Models;
 using Manta.Api.Models.OpenTelemetry;
 using Manta.Api.Repositories;
-using Manta.Api.Models.OpenTelemetry;
-using Manta.Api.Models.OpenTelemetry;
 using Npgsql;
-using Attribute = Manta.Api.Models.OpenTelemetry.Attribute;
 
 namespace Manta.Api.Services;
 
@@ -18,6 +14,8 @@ public class EventService(IConfiguration config, IEventRepository eventRepositor
     private readonly ILogger<EventService> _logger = logger;
     private readonly string _connectionString = config.GetValue<string>("ConnectionString") ?? string.Empty;
 
+    private const int DefaultSeverity = 9; // INFO
+    
     public async Task<(IEnumerable<Event> Events, int Count)> Load(int skip, int limit)
     {
         await using var connection = new NpgsqlConnection(_connectionString);
@@ -68,52 +66,6 @@ public class EventService(IConfiguration config, IEventRepository eventRepositor
         return events;
     }    
     
-    public async Task Save2(LogMessage message)
-    {
-        try
-        {
-            await using var connection = new NpgsqlConnection(_connectionString);
-            await connection.OpenAsync();
-
-            foreach (var logRecord in message.resourceLogs.SelectMany(resourceLog => resourceLog.scopeLogs.SelectMany(scopeLog => scopeLog.logRecords)))
-            {
-                var timestamp = TimeConverter.EpochToDateTime(long.Parse(logRecord.timeUnixNano));
-                
-                var attributes = new Dictionary<string, object>()
-                {
-                    { "severity", logRecord.severityNumber },
-                    {"severity_text", logRecord.severityText }
-                };
-
-                foreach (var attrib in logRecord.attributes)
-                {
-                    attributes.Add(attrib.Key, attrib.Value);
-                }
-                
-                var @event = new EventWithAttributes()
-                {
-                    TraceId = logRecord.traceId,
-                    ParentSpanId = null,
-                    SpanId = logRecord.spanId,
-                    Message = logRecord.body.stringValue,
-                    ServiceName = (string?)(message.resourceLogs[0].resource.attributes.SingleOrDefault(a => a.Key == "service.name"))?.Value ?? string.Empty,
-                    StartTime = timestamp,
-                    EndTime = timestamp,
-                    DurationMilliseconds = 0,
-                    IsTrace = false,
-                    Attributes = JsonSerializer.Serialize(ConvertToDynamic(attributes))
-                };
-                
-                await eventRepository.Insert(@event, connection);
-            }
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-            throw;
-        }
-    }
-
     public async Task Save(LogMessage message)
     {
         try
@@ -135,6 +87,9 @@ public class EventService(IConfiguration config, IEventRepository eventRepositor
                     {
                         var timestamp = TimeConverter.EpochToDateTime(long.Parse(logRecord.timeUnixNano));
 
+                        attributes.TryAdd("severity", logRecord.severityNumber);
+                        attributes.TryAdd("severity_text", logRecord.severityText);
+
                         foreach (var attrib in logRecord.attributes)
                         {
                             attributes.TryAdd(attrib.Key, attrib.Value);
@@ -151,6 +106,7 @@ public class EventService(IConfiguration config, IEventRepository eventRepositor
                             EndTime = timestamp,
                             DurationMilliseconds = 0,
                             IsTrace = false,
+                            Severity = logRecord.severityNumber,
                             Attributes = JsonSerializer.Serialize(ConvertToDynamic(attributes))
                         };
                         
@@ -210,6 +166,7 @@ public class EventService(IConfiguration config, IEventRepository eventRepositor
                             EndTime = endTime,
                             DurationMilliseconds = (endTime - startTime).TotalMilliseconds,
                             IsTrace = true,
+                            Severity = DefaultSeverity,
                             Attributes = JsonSerializer.Serialize(ConvertToDynamic(attributes))
                         };
                         
