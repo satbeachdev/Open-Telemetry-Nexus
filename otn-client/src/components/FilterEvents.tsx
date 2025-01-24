@@ -1,5 +1,5 @@
 import React, { useState, Fragment, useEffect } from 'react';
-import { Button, TextField, Box, Typography, IconButton, Autocomplete, Switch, FormControlLabel, MenuItem, Select } from '@mui/material';
+import { TextField, Box, Typography, IconButton, Autocomplete, Switch, FormControlLabel, MenuItem } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import EventService from '../eventService';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
@@ -25,8 +25,8 @@ const FilterEvents: React.FC<FilterEventsProps> = ({
   const [isSelecting, setIsSelecting] = useState(false);
   const [predefinedFiltersList, setPredefinedFiltersList] = useState<string[]>([]);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [hasSelection, setHasSelection] = useState(false);
   const [showingPredefined, setShowingPredefined] = useState(false);
+  const [inputValue, setInputValue] = useState('');
 
   useEffect(() => {
     const loadAttributeNames = async () => {
@@ -92,23 +92,17 @@ const FilterEvents: React.FC<FilterEventsProps> = ({
     await refreshPredefinedFilters();
   };
 
-  const handleInputChange = (_: any, newValue: string) => {
-    setSearchTerm(newValue);
-    if (!isMonitoring) {
-      setIsMonitoring(true);
-    }
+  const handleInputChange = (_: React.SyntheticEvent, newValue: string) => {
+    setInputValue(newValue || '');
+    setSearchTerm(newValue || '');
   };
 
-  const currentWord = getCurrentWord(searchTerm);
+  const currentWord = getCurrentWord(inputValue);
   const matchingOptions = attributeNames.filter(name => 
     name.toLowerCase().includes(currentWord.toLowerCase())
   );
   
-  const shouldShow = isMonitoring && currentWord.length >= 2;
-
-  const insertAtCursor = (text: string, cursorPosition: number, insertion: string): string => {
-    return text.slice(0, cursorPosition) + insertion + text.slice(cursorPosition);
-  };
+  const shouldShow = currentWord.length >= 2;
 
   return (
     <Fragment>
@@ -116,8 +110,9 @@ const FilterEvents: React.FC<FilterEventsProps> = ({
         <Autocomplete
           freeSolo
           options={showingPredefined ? predefinedFiltersList : matchingOptions}
-          open={(showingPredefined && dropdownOpen) || (!showingPredefined && shouldShow && matchingOptions.length > 0)}
+          open={showingPredefined ? dropdownOpen : (shouldShow && matchingOptions.length > 0)}
           value={searchTerm}
+          inputValue={inputValue}
           onOpen={() => {
             if (showingPredefined) {
               setDropdownOpen(true);
@@ -126,29 +121,30 @@ const FilterEvents: React.FC<FilterEventsProps> = ({
           onClose={() => {
             setDropdownOpen(false);
             setShowingPredefined(false);
-            if (!shouldShow) {
-              setIsMonitoring(false);
-            }
           }}
           onChange={(_, newValue) => {
             if (newValue) {
               if (showingPredefined) {
                 setSearchTerm(newValue);
-                // Auto-submit when selecting a predefined filter
-                setTimeout(() => {
-                  onSearch(encodeURIComponent(newValue));
-                  refreshPredefinedFilters();
-                }, 0);
+                setInputValue(newValue);
+                onSearch(encodeURIComponent(newValue));
+                refreshPredefinedFilters();
               } else {
-                setSearchTerm(replaceLastWord(searchTerm, newValue));
+                const updatedValue = replaceLastWord(searchTerm, newValue);
+                setSearchTerm(updatedValue);
+                setInputValue(updatedValue);
               }
-              setIsMonitoring(false);
-              setTimeout(() => setIsSelecting(false), 100);
             }
           }}
           onInputChange={handleInputChange}
-          onHighlightChange={(event, option) => {
-            setIsSelecting(option !== null);
+          getOptionLabel={(option) => option.toString()}
+          filterOptions={(options, params) => {
+            if (showingPredefined) {
+              return options.filter(option =>
+                option.toLowerCase().includes(params.inputValue.toLowerCase())
+              );
+            }
+            return matchingOptions;
           }}
           renderInput={(params) => (
             <TextField 
@@ -173,17 +169,21 @@ const FilterEvents: React.FC<FilterEventsProps> = ({
                       size="small" 
                       onClick={(e) => {
                         e.stopPropagation();
-                        setShowingPredefined(true);
+                        setShowingPredefined(prev => !prev);
                         setDropdownOpen(true);
-                        setIsMonitoring(false);
                       }}
+                      tabIndex={-1}
                     >
                       <ArrowDropDownIcon />
                     </IconButton>
                     {searchTerm && (
                       <IconButton
                         size="small"
-                        onClick={() => handleClear()}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleClear();
+                        }}
+                        tabIndex={-1}
                       >
                         <CloseIcon />
                       </IconButton>
@@ -232,4 +232,3 @@ const FilterEvents: React.FC<FilterEventsProps> = ({
 };
 
 export default FilterEvents;
-
