@@ -398,7 +398,7 @@ const InternalEventList: React.FC = () => {
         <Allotment ref={allotmentRef} vertical defaultSizes={[topPaneSize, -1]}>
             <Allotment.Pane minSize={0}>
                 <Paper sx={{ 
-                    p: '8px 16px 16px 16px',
+                    p: '0',  // Reverted from p: 0
                     height: '100%', 
                     overflow: 'hidden',
                     backgroundColor: theme.palette.background.default,
@@ -409,7 +409,7 @@ const InternalEventList: React.FC = () => {
                         display: 'flex', 
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        mb: 1
+                        mb: 1  // Reverted padding changes
                     }}>
                         <Typography variant="h6">Trace Timeline</Typography>
                         <IconButton 
@@ -428,7 +428,7 @@ const InternalEventList: React.FC = () => {
                         style={{ 
                             position: 'relative',
                             height: topPaneSize ? topPaneSize - 76 : 0,
-                            marginBottom: '20px'
+                            marginBottom: '20px'  // Reverted padding
                         }}
                     >
                         <Timeline 
