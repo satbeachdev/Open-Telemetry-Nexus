@@ -234,8 +234,19 @@ const InternalEventList: React.FC = () => {
             };
         },
         renderDetailPanel: ({ row }) => (
-            <Box sx={{ padding: '1rem' }}>
-                <Table size="small" sx={{ '& td, & th': { border: 'none' } }}>
+            <Box sx={{ 
+                padding: '0rem 1rem',  // Removed vertical padding completely
+                marginTop: '-0.5rem',   // Added negative margin to pull content up
+                marginBottom: '-0.5rem' // Added negative margin to pull content up
+            }}>
+                <Table size="small" sx={{ 
+                    '& td, & th': { 
+                        border: 'none',
+                        paddingTop: '2px',    
+                        paddingBottom: '2px'  
+                    },
+                    margin: 0  // Ensure table has no margin
+                }}>
                     <TableBody>
                         {eventAttributes.get(row.original.id)?.map((attr, index) => (
                             <TableRow key={index}>
@@ -243,7 +254,7 @@ const InternalEventList: React.FC = () => {
                                     component="th" 
                                     scope="row" 
                                     sx={{ 
-                                        padding: '4px 16px 4px 0',
+                                        padding: '2px 8px 2px 0',  // Reduced vertical padding
                                         verticalAlign: 'top'
                                     }}
                                 >
@@ -251,13 +262,13 @@ const InternalEventList: React.FC = () => {
                                 </TableCell>
                                 <TableCell 
                                     sx={{ 
-                                        padding: '4px 0',
+                                        padding: '2px 0',  // Reduced vertical padding
                                         whiteSpace: 'pre-wrap',
                                         wordBreak: 'break-word',
                                         ...(attr.name === 'exception.stacktrace' && {
                                             backgroundColor: 'error.main',
                                             color: 'white',
-                                            padding: '8px 12px',
+                                            padding: '8px 8px',
                                             borderRadius: '4px',
                                             fontFamily: 'monospace'
                                         })
