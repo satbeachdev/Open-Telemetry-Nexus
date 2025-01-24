@@ -9,7 +9,7 @@ namespace Manta.Api.Repositories;
 
 public class EventRepository : RepositoryBase<Event>, IEventRepository
 {
-    private const string InsertCommand = @"INSERT INTO Events (trace_id, parent_span_id, span_id, message, start_timestamp, end_timestamp, duration, is_trace, service_name, attributes) VALUES (:trace_id, :parent_span_id, :span_id, :message, :start_timestamp, :end_timestamp, :duration, :is_trace, :service_name, :attributes) RETURNING id;";
+    private const string InsertCommand = @"INSERT INTO Events (trace_id, parent_span_id, span_id, message, start_timestamp, end_timestamp, duration, is_trace, service_name, severity, attributes) VALUES (:trace_id, :parent_span_id, :span_id, :message, :start_timestamp, :end_timestamp, :duration, :is_trace, :service_name, :severity, :attributes) RETURNING id;";
 
     public async Task<object?> Insert(EventWithAttributes @event, NpgsqlConnection connection)
     {
@@ -27,6 +27,7 @@ public class EventRepository : RepositoryBase<Event>, IEventRepository
             command.Parameters.AddWithValue("end_timestamp", @event.EndTime);
             command.Parameters.AddWithValue("duration", @event.DurationMilliseconds);
             command.Parameters.AddWithValue("is_trace", @event.IsTrace);
+            command.Parameters.AddWithValue("severity", @event.Severity);
             command.Parameters.AddWithValue("service_name", @event.ServiceName);
             command.Parameters.AddWithValue("attributes", NpgsqlTypes.NpgsqlDbType.Jsonb, @event.Attributes);
 

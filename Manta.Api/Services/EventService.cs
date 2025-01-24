@@ -1,3 +1,4 @@
+using System.Collections.Specialized;
 using System.Dynamic;
 using System.Text.Json;
 using Manta.Api.FilterConverter;
@@ -75,26 +76,33 @@ public class EventService(IConfiguration config, IEventRepository eventRepositor
             
             foreach (var resourceLog in message.resourceLogs)
             {
-                var attributes = new Dictionary<string, object>();
+                var resourceAttributes = new Dictionary<string, object>();
 
-                AddResourceAttributes(resourceLog, attributes);
+                AddResourceAttributes(resourceLog, resourceAttributes);
 
                 foreach (var scopeLog in resourceLog.scopeLogs)
                 {
-                    AddScopeAttributes(scopeLog, attributes);
+                    var scopeAttributes = new Dictionary<string, object>();
+
+                    AddScopeAttributes(scopeLog, scopeAttributes);
 
                     foreach (var logRecord in scopeLog.logRecords)
                     {
                         var timestamp = TimeConverter.EpochToDateTime(long.Parse(logRecord.timeUnixNano));
 
-                        attributes.TryAdd("severity", logRecord.severityNumber);
-                        attributes.TryAdd("severity_text", logRecord.severityText);
+                        var logAttributes = new Dictionary<string, object>(resourceAttributes.Concat(scopeAttributes).ToDictionary(k => k.Key, v => v.Value));
 
-                        foreach (var attrib in logRecord.attributes)
+                        logAttributes.TryAdd("severity", logRecord.severityNumber);
+                        logAttributes.TryAdd("severity_text", logRecord.severityText);
+
+                        if (logRecord.attributes != null)
                         {
-                            attributes.TryAdd(attrib.Key, attrib.Value);
+                            foreach (var attrib in logRecord.attributes)
+                            {
+                                logAttributes.TryAdd(attrib.Key, attrib.Value);
+                            }
                         }
-                
+
                         var @event = new EventWithAttributes()
                         {
                             TraceId = logRecord.traceId,
@@ -107,7 +115,7 @@ public class EventService(IConfiguration config, IEventRepository eventRepositor
                             DurationMilliseconds = 0,
                             IsTrace = false,
                             Severity = logRecord.severityNumber,
-                            Attributes = JsonSerializer.Serialize(ConvertToDynamic(attributes))
+                            Attributes = JsonSerializer.Serialize(ConvertToDynamic(logAttributes)),
                         };
                         
                         await eventRepository.Insert(@event, connection);
@@ -182,7 +190,7 @@ public class EventService(IConfiguration config, IEventRepository eventRepositor
         }
     }
     
-    static dynamic ConvertToDynamic(Dictionary<string, object> dictionary)
+    static dynamic ConvertToDynamic(IDictionary<string, object> dictionary)
     {
         var expando = new ExpandoObject();
         var expandoDict = (IDictionary<string, object>)expando;
@@ -218,9 +226,12 @@ public class EventService(IConfiguration config, IEventRepository eventRepositor
     // Span Attributes
     private void AddResourceAttributes(ResourceSpan resourceSpan, Dictionary<string, object> attributes)
     {
-        foreach (var attribute in resourceSpan.resource.attributes)
+        if (resourceSpan.resource.attributes != null)
         {
-            attributes.Add($"resource.{attribute.Key}", attribute.Value);
+            foreach (var attribute in resourceSpan.resource.attributes)
+            {
+                attributes.Add($"resource.{attribute.Key}", attribute.Value);
+            }
         }
     }
 
@@ -238,9 +249,12 @@ public class EventService(IConfiguration config, IEventRepository eventRepositor
     // Log Attributes
     private void AddResourceAttributes(ResourceLog resourceLog, Dictionary<string, object> attributes)
     {
-        foreach (var attribute in resourceLog.resource.attributes)
+        if (resourceLog.resource.attributes != null)
         {
-            attributes.Add($"resource.{attribute.Key}", attribute.Value);
+            foreach (var attribute in resourceLog.resource.attributes)
+            {
+                attributes.Add($"resource.{attribute.Key}", attribute.Value);
+            }
         }
     }
 

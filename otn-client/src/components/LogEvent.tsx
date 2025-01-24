@@ -11,6 +11,20 @@ export const SEVERITY_ICONS = {
   FATAL: 'dangerous'                // Octagon danger symbol
 };
 
+type SeverityStyle = {
+  color: string;
+  backgroundColor?: string;
+};
+
+export const SEVERITY_COLORS: Record<keyof typeof SEVERITY_ICONS, SeverityStyle> = {
+  TRACE: { color: '#757575' },           // Gray
+  DEBUG: { color: '#4CAF50' },           // Green
+  INFO: { color: '#2196F3' },            // Blue
+  WARN: { color: '#FFC107' },            // Yellow/Amber
+  ERROR: { color: '#000000', backgroundColor: '#F44336' },
+  FATAL: { color: '#FFFFFF', backgroundColor: '#D32F2F' }
+};
+
 export const getSeverityFromLevel = (level: number): keyof typeof SEVERITY_ICONS => {
   // Based on OpenTelemetry severity level ranges
   if (level <= 4) return 'TRACE';     // Trace: 1-4
@@ -38,6 +52,9 @@ interface LogEventProps {
 export const ICON_WIDTH = 16; // Width of the icon in pixels
 
 const LogEvent: React.FC<LogEventProps> = ({ id, index, message, left, top, barHeight, offset, severity, isNearRightEdge, onHover, onClick }) => {
+  const severityType = getSeverityFromLevel(severity);
+  const severityStyle = SEVERITY_COLORS[severityType];
+  
   return (
     <div
       style={{
@@ -79,10 +96,13 @@ const LogEvent: React.FC<LogEventProps> = ({ id, index, message, left, top, barH
             position: 'relative',
             top: '1px',
             marginTop: '3px',
-            fontVariationSettings: '"FILL" 1, "wght" 400'
+            fontVariationSettings: '"FILL" 1, "wght" 400',
+            padding: severityStyle.backgroundColor ? '2px' : undefined,
+            borderRadius: severityStyle.backgroundColor ? '50%' : undefined,
+            ...severityStyle  // Spread the color and background color styles
           }}
         >
-          {SEVERITY_ICONS[getSeverityFromLevel(severity)]}
+          {SEVERITY_ICONS[severityType]}
         </span>
       </EventTooltip>
     </div>

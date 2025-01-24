@@ -21,12 +21,12 @@ public class GetTraceEvents(IConfiguration config) : IWebRequestHandler<string>
         //           """;
         
         var sql = """
-                  SELECT id, message,start_timestamp, end_timestamp, span_id
+                  SELECT id, message,start_timestamp, end_timestamp, span_id, severity
                   FROM events e
                   WHERE trace_id = @TraceId
                   ORDER BY start_timestamp
                   """;        var results = await connection.QueryAsync(sql, new {TraceId = traceId});
-        var events = results.Select(row => new Event() {Message = row.message, StartTime = row.start_timestamp, EndTime = row.end_timestamp, SpanId = row.span_id, Id = row.id, TraceId = traceId}).ToList();
+        var events = results.Select(row => new Event() {Message = row.message, StartTime = row.start_timestamp, EndTime = row.end_timestamp, SpanId = row.span_id, Id = row.id, TraceId = traceId, Severity = row.severity}).ToList();
 
         foreach (var @event in events)
         {

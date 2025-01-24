@@ -6,7 +6,6 @@ using Manta.Api.Middleware;
 using Manta.Api.Models.OpenTelemetry;
 using Manta.Api.Repositories;
 using Manta.Api.Services;
-using Manta.Api.Models.OpenTelemetry;
 using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,8 +13,9 @@ var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetValue<string>("ConnectionString");
 
 builder.Services.AddTransient<IOpenTelemetryHandler<LogMessage>, LogHandler>();
-
 builder.Services.AddTransient<IOpenTelemetryHandler<TraceMessage>, TraceHandler>();
+builder.Services.AddTransient<IOpenTelemetryHandler<MetricMessage>, MetricHandler>();
+
 builder.Services.AddTransient<IWebRequestHandler<int, int>, GetEvents>();
 builder.Services.AddTransient<IWebRequestHandler<string, int, int>, FilterEvents>();
 builder.Services.AddTransient<IWebRequestHandler<string>, GetTraceEvents>();
@@ -44,7 +44,7 @@ var app = builder.Build();
 // Incoming OpenTelemetry endpoints
 app.MapPost("/v1/logs", ([FromBody] LogMessage message, IOpenTelemetryHandler<LogMessage> handler) => handler.Handle(message));
 app.MapPost("/v1/traces", ([FromBody] TraceMessage message, IOpenTelemetryHandler<TraceMessage> handler) => handler.Handle(message));
-//app.MapPost("/v1/metrics", ([FromBody] MetricMessage message, IHandler<MetricMessage> handler) => handler.Handle(message));
+app.MapPost("/v1/metrics", ([FromBody] MetricMessage message, IOpenTelemetryHandler<MetricMessage> handler) => handler.Handle(message));
 
 // Outgoing UI endpoints
 app.MapGet("/allevents", async (HttpContext ctx, int skip, int limit, [FromServices]IWebRequestHandler<int, int> getEvents) => await getEvents.Handle(ctx, skip, limit));
@@ -55,7 +55,7 @@ app.MapGet("/events/attribute-names", async (HttpContext ctx, [FromServices]IWeb
 app.MapGet("/filters", async (HttpContext ctx, int? skip, int? limit, [FromServices]IGetAllFiltersHandler getFilters) => await getFilters.Handle(ctx, skip, limit));
 
 app.UseMiddleware<GzipDecompressionMiddleware>();
-//app.UseMiddleware<LogJsonRequestBodyMiddleware>();
+app.UseMiddleware<LogJsonRequestBodyMiddleware>();
 
 app.UseCors("AllowSpecificOrigin");
 

@@ -23,6 +23,6 @@ public class GetEventAttributes(IConfiguration config) : IWebRequestHandler<int>
         // Deserialize the attributes column
         Dictionary<string, object> attributes = JsonSerializer.Deserialize<Dictionary<string, object>>(result.attributes.ToString());
         
-        return Results.Ok(attributes.Select<KeyValuePair<string, object>, dynamic>(x => new { name = x.Key, value = x.Value }).ToList());
+        return Results.Ok(attributes.Select<KeyValuePair<string, object>, dynamic>(x => new { name = x.Key, value = x.Value }).OrderBy(x => x.name).ToList());
     }
 }
