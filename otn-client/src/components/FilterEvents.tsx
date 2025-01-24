@@ -161,8 +161,14 @@ const FilterEvents: React.FC<FilterEventsProps> = ({
               InputProps={{
                 ...params.InputProps,
                 endAdornment: (
-                  <React.Fragment>
-                    {params.InputProps.endAdornment}
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      gap: 0.5,
+                      position: 'absolute',
+                      right: 0
+                    }}
+                  >
                     <IconButton 
                       size="small" 
                       onClick={(e) => {
@@ -171,12 +177,28 @@ const FilterEvents: React.FC<FilterEventsProps> = ({
                         setDropdownOpen(true);
                         setIsMonitoring(false);
                       }}
-                      sx={{ mr: -1 }}
                     >
                       <ArrowDropDownIcon />
                     </IconButton>
-                  </React.Fragment>
+                    {searchTerm && (
+                      <IconButton
+                        size="small"
+                        onClick={() => handleClear()}
+                      >
+                        <CloseIcon />
+                      </IconButton>
+                    )}
+                  </Box>
                 ),
+              }}
+              sx={{ 
+                '& .MuiAutocomplete-endAdornment': {
+                  position: 'relative',
+                  right: 0
+                },
+                '& .MuiInputBase-root': {
+                  paddingRight: '8px'
+                }
               }}
             />
           )}
@@ -188,26 +210,6 @@ const FilterEvents: React.FC<FilterEventsProps> = ({
           disablePortal
           sx={{ flex: 1 }}
         />
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={handleSearch}
-          style={{ marginLeft: '8px', width: '80px' }}
-        >
-          Submit
-        </Button>
-        <IconButton
-          onClick={handleClear}
-          style={{
-            marginLeft: '8px',
-            borderRadius: '4px',
-            padding: '6px',
-            border: '1px solid rgba(0, 0, 0, 0.23)',
-          }}
-          aria-label="clear search"
-        >
-          <CloseIcon />
-        </IconButton>
       </Box>
       <Box mt={1} display="flex" alignItems="center">
         <Typography variant="body1">{resultCount} events</Typography>
@@ -230,3 +232,4 @@ const FilterEvents: React.FC<FilterEventsProps> = ({
 };
 
 export default FilterEvents;
+
