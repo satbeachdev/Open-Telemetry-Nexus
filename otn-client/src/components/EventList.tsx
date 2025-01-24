@@ -222,49 +222,73 @@ const InternalEventList: React.FC = () => {
 		},
         muiTableBodyRowProps: ({ row }) => {
             const isHighlighted = row.original?.id === highlightedEventId;
+            const isExpanded = row.getIsExpanded();
+            const expandedBgColor = theme.palette.action.selected;
             
             return {
                 onClick: () => handleRowClick(row.original, row),
                 sx: {
                     cursor: 'pointer',
                     backgroundColor: isHighlighted ? 
-                      theme.palette.action.selected : 
-                      'inherit',
+                        theme.palette.action.selected : 
+                        isExpanded ?
+                            expandedBgColor :
+                            'inherit',
+                    '& .MuiTableCell-root': {
+                        backgroundColor: 'transparent',
+                    },
+                    // Style the detail panel container
+                    '& td.MuiTableCell-root.MuiTableCell-body[colspan]': {
+                        backgroundColor: 'transparent',
+                        padding: 0,
+                    },
+                    // Ensure detail panel content matches exactly
+                    '& .MuiCollapse-root': {
+                        backgroundColor: 'transparent',
+                    },
                 },
             };
         },
         renderDetailPanel: ({ row }) => (
             <Box sx={{ 
-                padding: '0rem 1rem',  // Removed vertical padding completely
-                marginTop: '-0.5rem',   // Added negative margin to pull content up
-                marginBottom: '-0.5rem' // Added negative margin to pull content up
+                padding: 0,
+                backgroundColor: 'transparent',
+                width: '100%',
+                pl: '30px',
             }}>
                 <Table size="small" sx={{ 
                     '& td, & th': { 
                         border: 'none',
-                        paddingTop: '2px',    
-                        paddingBottom: '2px'  
+                        paddingTop: '1px',
+                        paddingBottom: '1px',
+                        lineHeight: '1.25',
+                        backgroundColor: 'transparent',
                     },
-                    margin: 0  // Ensure table has no margin
+                    margin: 0,
+                    backgroundColor: 'transparent',
+                    tableLayout: 'auto',
                 }}>
-                    <TableBody>
+                    <TableBody sx={{ backgroundColor: 'transparent' }}>
                         {eventAttributes.get(row.original.id)?.map((attr, index) => (
-                            <TableRow key={index}>
+                            <TableRow key={index} sx={{ backgroundColor: 'transparent' }}>
                                 <TableCell 
                                     component="th" 
                                     scope="row" 
                                     sx={{ 
-                                        padding: '2px 8px 2px 0',  // Reduced vertical padding
-                                        verticalAlign: 'top'
+                                        padding: '1px 8px 1px 0',
+                                        verticalAlign: 'top',
+                                        whiteSpace: 'nowrap',
+                                        minWidth: '148px',
                                     }}
                                 >
                                     {attr.name}
                                 </TableCell>
                                 <TableCell 
                                     sx={{ 
-                                        padding: '2px 0',  // Reduced vertical padding
+                                        padding: '1px 8px 1px 0',
                                         whiteSpace: 'pre-wrap',
                                         wordBreak: 'break-word',
+                                        width: '100%',
                                         ...(attr.name === 'exception.stacktrace' && {
                                             backgroundColor: 'error.main',
                                             color: 'white',
