@@ -2,14 +2,17 @@ import React, { useMemo, useEffect, useState, useRef } from 'react';
 import { MaterialReactTable, useMaterialReactTable, type MRT_ColumnDef, type MRT_Row, type MRT_TableOptions } from 'material-react-table';
 import { useInfiniteQuery, InfiniteData } from '@tanstack/react-query';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import EventService, { Event, TraceEvent, Attribute } from '../eventService';
+import EventService from '../services/eventService';
 import TimeFormatter from '../TimeFormatter'
 import { Box, Paper, Typography, useTheme, Table, TableBody, TableCell, TableRow, IconButton } from '@mui/material'
 import { Allotment, AllotmentHandle } from "allotment"
 import "allotment/dist/style.css"
 import Timeline from './timeline'
-import FilterEvents from './FilterEvents'
+import FilterEvents, { FilterEventsMethods } from './FilterEvents'
 import CloseIcon from '@mui/icons-material/Close'
+import { Event } from '../models/Event';
+import { Attribute } from '../models/Attribute';
+import { TraceEvent } from '../models/TraceEvent';
 
 const ITEMS_PER_PAGE = 50; // Adjust as needed
 const REFRESH_INTERVAL = 5000;
@@ -25,7 +28,11 @@ interface EventRowState {
     loading: boolean;
 }
 
-const InternalEventList: React.FC = () => {
+interface EventListProps {
+  onFilterEventsRefChange?: (ref: React.RefObject<FilterEventsMethods>) => void;
+}
+
+const InternalEventList: React.FC<EventListProps> = ({ onFilterEventsRefChange }) => {
 	const [tableHeight, setTableHeight] = useState('100vh');
     const [traceEvents, setTraceEvents] = useState<TraceEvent[]>([]); 
     const [eventAttributes, setEventAttributes] = useState<Map<number, Attribute[]>>(new Map());
@@ -38,6 +45,7 @@ const InternalEventList: React.FC = () => {
     const [highlightedEventId, setHighlightedEventId] = useState<Number | null>(null);
     const [rowStates, setRowStates] = useState<Map<string, EventRowState>>(new Map());
     const timelineRef = useRef<HTMLDivElement>(null);
+    const filterEventsRef = useRef<FilterEventsMethods>(null);
 
     const { data, fetchNextPage, isError, isFetching, isLoading, refetch } = useInfiniteQuery<EventQueryResult>({
 		queryKey: ['events', searchTerm],
@@ -394,6 +402,12 @@ const InternalEventList: React.FC = () => {
         }
     }, [traceEvents, topPaneSize]);
 
+    useEffect(() => {
+        if (onFilterEventsRefChange) {
+            onFilterEventsRefChange(filterEventsRef);
+        }
+    }, [onFilterEventsRefChange]);
+
     return (
         <Allotment ref={allotmentRef} vertical defaultSizes={[topPaneSize, -1]}>
             <Allotment.Pane minSize={0}>
@@ -442,6 +456,7 @@ const InternalEventList: React.FC = () => {
             <Allotment.Pane>
                 <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                     <FilterEvents 
+                        ref={filterEventsRef}
                         resultCount={resultCount} 
                         onSearch={handleSearch}
                         autoRefreshEnabled={autoRefreshEnabled}
@@ -458,11 +473,10 @@ const InternalEventList: React.FC = () => {
 
 const queryClient = new QueryClient();
 
-const EventList = () => (
-    //App.tsx or AppProviders file. Don't just wrap this component with QueryClientProvider! Wrap your whole App!
-    <QueryClientProvider client={queryClient}>
-      <InternalEventList />
-    </QueryClientProvider>
-  );
+const EventList: React.FC<EventListProps> = (props) => (
+  <QueryClientProvider client={queryClient}>
+    <InternalEventList {...props} />
+  </QueryClientProvider>
+);
 
 export default EventList;

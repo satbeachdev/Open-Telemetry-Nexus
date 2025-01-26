@@ -1,33 +1,9 @@
 import axios, { AxiosRequestConfig } from 'axios';
 import { ZonedDateTime } from 'js-joda';
 import { trace, context, propagation, Span, SpanStatusCode } from '@opentelemetry/api';
-
-export interface Event {
-  id: number;
-  message: string;
-  startTime: ZonedDateTime; 
-  endTime: ZonedDateTime;
-  traceId: string;
-  spanId: string;
-  durationMilliseconds: number;
-  severity: number;
-}
-
-export interface TraceEvent {
-  id: number;
-  message: string;
-  startTime: ZonedDateTime; 
-  endTime: ZonedDateTime;
-  spanId: string;
-  offsetMilliseconds: number;
-  durationMilliseconds: number;
-  severity: number;
-}
-
-export interface Attribute {
-  name: string;
-  value: string; 
-}
+import { Event } from '../models/Event';
+import { Attribute } from '../models/Attribute';
+import { TraceEvent } from '../models/TraceEvent';
 
 class EventService {
   private static eventAttributes: Map<string, any[]> = new Map();
@@ -81,9 +57,6 @@ class EventService {
         span.end();
       }
     });
-
-
-
   }
 
   static async FilterEvents(filter: string, skip: number, limit: number): Promise<{ data: Event[], count: number }> {

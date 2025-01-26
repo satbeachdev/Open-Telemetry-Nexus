@@ -7,6 +7,7 @@ import RightDrawer from './components/rightDrawer';
 import EventList from './components/EventList';
 import Footer from './components/footer';
 import { Brightness4 as Brightness4Icon, Brightness7 as Brightness7Icon } from '@mui/icons-material';
+import { FilterEventsMethods } from './components/FilterEvents';
 
 export const ThemeContext = createContext<'light' | 'dark'>('light');
 
@@ -17,6 +18,7 @@ const App: React.FC = () => {
   const [rightOpen, setRightOpen] = useState(false);
   const [tabValue, setTabValue] = useState(0);
   const [mode, setMode] = useState<'light' | 'dark'>('light');
+  const [filterEventsRef, setFilterEventsRef] = useState<React.RefObject<FilterEventsMethods> | null>(null);
 
   const theme = useMemo(
     () =>
@@ -42,6 +44,10 @@ const App: React.FC = () => {
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
+  };
+
+  const handleFilterSelect = (filter: string) => {
+    filterEventsRef?.current?.setAndSearch(filter);
   };
 
   return (
@@ -82,7 +88,11 @@ const App: React.FC = () => {
             </Toolbar>
           </AppBar>
           <Box sx={{ display: 'flex', flexGrow: 1, overflow: 'hidden' }}>
-            <LeftDrawer open={leftOpen} drawerWidth={drawerWidth} />
+            <LeftDrawer 
+              open={leftOpen} 
+              drawerWidth={drawerWidth} 
+              onFilterSelect={handleFilterSelect}
+            />
             <Box component="main" sx={{ 
               flexGrow: 1, 
               display: 'flex', 
@@ -117,12 +127,10 @@ const App: React.FC = () => {
                   }),
                 }}
               >
-                <Tab label="Events 1" />
-                <Tab label="Events 2" />
+                <Tab label="Scratchpad" />
               </Tabs>
               <Box sx={{ flexGrow: 1, overflow: 'auto', position: 'relative', margin: '10px' }}>
-                {tabValue === 0 && <EventList />}
-                {tabValue === 1 && <EventList />}
+                {tabValue === 0 && <EventList onFilterEventsRefChange={setFilterEventsRef} />}
               </Box>
             </Box>
             <RightDrawer open={rightOpen} drawerWidth={drawerWidth} />

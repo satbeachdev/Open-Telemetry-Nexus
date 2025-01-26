@@ -1,7 +1,7 @@
 import React, { useState, Fragment, useEffect } from 'react';
 import { TextField, Box, Typography, IconButton, Autocomplete, Switch, FormControlLabel, MenuItem } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import EventService from '../eventService';
+import EventService from '../services/eventService';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 
 interface FilterEventsProps {
@@ -10,18 +10,22 @@ interface FilterEventsProps {
   autoRefreshEnabled?: boolean;
   onAutoRefreshChange?: (enabled: boolean) => void;
   predefinedFilters?: string[];
+  ref?: React.ForwardedRef<FilterEventsMethods>;
 }
 
-const FilterEvents: React.FC<FilterEventsProps> = ({ 
+export interface FilterEventsMethods {
+  setAndSearch: (filter: string) => void;
+}
+
+const FilterEvents = React.forwardRef<FilterEventsMethods, FilterEventsProps>(({ 
   resultCount, 
   onSearch, 
   autoRefreshEnabled = true,
   onAutoRefreshChange,
   predefinedFilters = [] 
-}) => {
+}, ref) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [attributeNames, setAttributeNames] = useState<string[]>([]);
-  const [isMonitoring, setIsMonitoring] = useState(true);
   const [isSelecting, setIsSelecting] = useState(false);
   const [predefinedFiltersList, setPredefinedFiltersList] = useState<string[]>([]);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -103,6 +107,25 @@ const FilterEvents: React.FC<FilterEventsProps> = ({
   );
   
   const shouldShow = currentWord.length >= 2;
+
+  // Expose methods through ref
+  React.useImperativeHandle(ref, () => ({
+    setAndSearch: (filter: string) => {
+      // Update both controlled values of Autocomplete
+      setSearchTerm(filter);
+      setInputValue(filter);
+      
+      // Trigger the same flow as when selecting from predefined filters
+      if (showingPredefined) {
+        setDropdownOpen(false);
+        setShowingPredefined(false);
+      }
+      
+      // Trigger search directly
+      onSearch(encodeURIComponent(filter));
+      refreshPredefinedFilters();
+    }
+  }));
 
   return (
     <Fragment>
@@ -229,6 +252,6 @@ const FilterEvents: React.FC<FilterEventsProps> = ({
       </Box>
     </Fragment>
   );
-};
+});
 
 export default FilterEvents;

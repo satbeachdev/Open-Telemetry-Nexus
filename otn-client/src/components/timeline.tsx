@@ -3,7 +3,7 @@ import { useTheme } from '@mui/material/styles'; // Import useTheme
 import { Duration } from 'js-joda'; // Import js-joda
 import TimelineContainer from './TimelineContainer'; // Import the new component
 import LogEvent, { ICON_WIDTH } from './LogEvent';
-import { TraceEvent } from '../eventService';
+import { TraceEvent } from '../models/TraceEvent';
 import TraceEventBar from './TraceEvent';
 
 // interface BarData {
