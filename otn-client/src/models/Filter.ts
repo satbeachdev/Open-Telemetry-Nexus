@@ -1,15 +1,7 @@
-export interface FilterCriteria {
-  field?: string;
-  operator?: 'equals' | 'contains' | 'startsWith' | 'endsWith' | 'greaterThan' | 'lessThan';
-  value?: any;
-  // Add other criteria properties as needed
-}
+import { ZonedDateTime } from "js-joda";
 
 export interface Filter {
-  id: string;
-  name: string;
-  description?: string;
-  criteria: FilterCriteria;
-  createdAt?: Date;
-  updatedAt?: Date;
+  id: number;
+  text: string;
+  lastUsed?: ZonedDateTime;
 } 

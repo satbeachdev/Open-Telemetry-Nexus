@@ -52,7 +52,7 @@ app.MapGet("/events", async (HttpContext ctx, string filter,int skip, int limit,
 app.MapGet("/events/{eventId:int}/attributes", async (HttpContext ctx, [FromRoute] int eventId, [FromServices]IWebRequestHandler<int> getEventAttributes) => await getEventAttributes.Handle(ctx, eventId));
 app.MapGet("/traces/{traceId}/events", async (HttpContext ctx, [FromRoute] string traceId, [FromServices]IWebRequestHandler<string> getTraceEvents) => await getTraceEvents.Handle(ctx, traceId));
 app.MapGet("/events/attribute-names", async (HttpContext ctx, [FromServices]IWebRequestHandler getUniqueAttributes) => await getUniqueAttributes.Handle(ctx));
-app.MapGet("/filters", async (HttpContext ctx, int? skip, int? limit, [FromServices]IGetAllFiltersHandler getFilters) => await getFilters.Handle(ctx, skip, limit));
+app.MapGet("/filters", async (HttpContext ctx, int? skip, int? limit, bool? textOnly, [FromServices]IGetAllFiltersHandler getFilters) => await getFilters.Handle(ctx, skip, limit, textOnly));
 
 app.UseMiddleware<GzipDecompressionMiddleware>();
 app.UseMiddleware<LogJsonRequestBodyMiddleware>();

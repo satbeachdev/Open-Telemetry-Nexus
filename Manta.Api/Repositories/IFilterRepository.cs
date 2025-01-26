@@ -9,7 +9,7 @@ public interface IFilterRepository
     Task<Filter?> Update(Filter filter, NpgsqlConnection connection);
     Task<bool> Delete(int filterId, NpgsqlConnection connection);
     
-    Task<IEnumerable<Filter>> GetAll(NpgsqlConnection connection);
+    Task<IEnumerable<object>> GetAll(NpgsqlConnection connection, int? skip = null, int? limit = null, bool? textOnly = false);
     
     Task<int> GetFilterIdByExpression(string filter, NpgsqlConnection connection);
 }

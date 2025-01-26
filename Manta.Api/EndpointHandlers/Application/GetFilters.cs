@@ -5,9 +5,9 @@ namespace Manta.Api.EndpointHandlers.Application;
 
 public class GetFilters(IFilterService filterService) : IGetAllFiltersHandler
 {
-    public async Task<IResult> Handle(HttpContext ctx, int? skip, int? limit)
+    public async Task<IResult> Handle(HttpContext ctx, int? skip, int? limit, bool? textOnly)
     {
-        var result = await filterService.Load(skip, limit);
+        var result = await filterService.Load(skip, limit, textOnly);
         
         //ctx.Response.Headers.Append("x-total-count", result.Count.ToString());
         

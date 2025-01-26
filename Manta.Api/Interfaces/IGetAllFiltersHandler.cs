@@ -1,6 +1,6 @@
 namespace Manta.Api.Interfaces;
 
-public interface IGetAllFiltersHandler : IWebRequestHandler<int?, int?>
+public interface IGetAllFiltersHandler : IWebRequestHandler<int?, int?, bool?>
 {
     
 }

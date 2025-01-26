@@ -84,15 +84,35 @@ public class FilterRepository : RepositoryBase<Filter>, IFilterRepository
         return await Task.FromResult(success);
     }
 
-    public async Task<IEnumerable<Filter>> GetAll(NpgsqlConnection connection)
+    public async Task<IEnumerable<object>> GetAll(NpgsqlConnection connection, int? skip = null, int? limit = null, bool? textOnly = false)
     {
-        IEnumerable<Filter> filters = [];
+        IEnumerable<object> filters = [];
         
         SetTypeMap();
         
         try
         {
-            filters = await connection.QueryAsync<Filter>(GetAllCommand);
+            var sql = GetAllCommand;
+
+            if (textOnly.HasValue && textOnly.Value)
+            {
+                sql = "SELECT filter from Filters";
+            }
+
+            if (skip.HasValue && limit.HasValue)
+            {
+                sql += " OFFSET " + skip.Value;
+                sql += " LIMIT" + limit.Value;
+            }
+
+            if (textOnly.HasValue && textOnly.Value)
+            {
+                filters = await connection.QueryAsync<string>(sql);
+            }
+            else
+            {
+                filters = await connection.QueryAsync<Filter>(sql);
+            }
         } 
         catch (Exception e)
         {

@@ -8,7 +8,7 @@ import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
 import ViewIcon from '@mui/icons-material/ViewList';
 import FilterIcon from '@mui/icons-material/FilterAlt';
-import { filterService } from '../services/filterService';
+import FilterService from '../services/filterService';
 import { viewService } from '../services/viewService';
 import Typography from '@mui/material/Typography';
 import { Filter } from '../models/Filter';
@@ -23,14 +23,14 @@ interface LeftDrawerProps {
 }
 
 const LeftDrawer: React.FC<LeftDrawerProps> = ({ open, drawerWidth, onFilterSelect }) => {
-  const [filters, setFilters] = useState<string[]>([]);
+  const [filters, setFilters] = useState<Filter[]>([]);
   const [views, setViews] = useState<View[]>([]);
 
   useEffect(() => {
     const loadData = async () => {
       try {
         const [filtersData, viewsData] = await Promise.all([
-          filterService.getFilters(),
+          FilterService.getFilters(),
           viewService.getViews()
         ]);
         setFilters(filtersData);
@@ -88,20 +88,31 @@ const LeftDrawer: React.FC<LeftDrawerProps> = ({ open, drawerWidth, onFilterSele
           }
         }}>
           {filters.map((filter) => (
-            <ListItem key={filter} disablePadding>
+            <ListItem key={filter.id} disablePadding sx={{ py: 0 }}>
               <Tooltip 
-                title={filter} 
+                title={filter.text} 
                 placement="top"
                 TransitionProps={{ style: { marginBottom: '-8px' } }}
               >
-                <ListItemButton onClick={() => handleFilterClick(filter)}>
+                <ListItemButton 
+                  onClick={() => handleFilterClick(filter.text)}
+                  sx={{ py: 0.25 }}
+                >
                   <ListItemText 
-                    primary={filter} 
+                    primary={filter.text} 
+                    secondary={filter.lastUsed ? filter.lastUsed.toString().replace('T', ' ').split('.')[0] : ''}
                     sx={{
+                      my: 0,
                       '& .MuiListItemText-primary': {
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap'
+                        whiteSpace: 'nowrap',
+                        fontSize: '1rem',
+                        lineHeight: 1.2
+                      },
+                      '& .MuiListItemText-secondary': {
+                        fontSize: '0.875rem',
+                        lineHeight: 1.2
                       }
                     }}
                   />
@@ -122,9 +133,18 @@ const LeftDrawer: React.FC<LeftDrawerProps> = ({ open, drawerWidth, onFilterSele
           </Typography>
         </ListItem>
         {views.map((view) => (
-          <ListItem key={view.id} disablePadding>
-            <ListItemButton>
-              <ListItemText primary={view.name} />
+          <ListItem key={view.id} disablePadding sx={{ py: 0 }}>
+            <ListItemButton sx={{ py: 0.25 }}>
+              <ListItemText 
+                primary={view.name}
+                sx={{
+                  my: 0,
+                  '& .MuiListItemText-primary': {
+                    fontSize: '1rem',
+                    lineHeight: 1.2
+                  }
+                }}
+              />
             </ListItemButton>
           </ListItem>
         ))}

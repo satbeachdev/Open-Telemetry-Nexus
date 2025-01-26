@@ -2,6 +2,7 @@ import React, { useState, Fragment, useEffect } from 'react';
 import { TextField, Box, Typography, IconButton, Autocomplete, Switch, FormControlLabel, MenuItem } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import EventService from '../services/eventService';
+import FilterService from '../services/filterService';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 
 interface FilterEventsProps {
@@ -48,7 +49,7 @@ const FilterEvents = React.forwardRef<FilterEventsMethods, FilterEventsProps>(({
   useEffect(() => {
     const loadPredefinedFilters = async () => {
       try {
-        const filters = await EventService.LoadPredefinedFilters();
+        const filters = await FilterService.getFilterStringsOnly();
         setPredefinedFiltersList(filters);
       } catch (error) {
         console.error('Failed to load predefined filters:', error);
@@ -71,7 +72,7 @@ const FilterEvents = React.forwardRef<FilterEventsMethods, FilterEventsProps>(({
 
   const refreshPredefinedFilters = async () => {
     try {
-      const filters = await EventService.LoadPredefinedFilters();
+      const filters = await FilterService.getFilterStringsOnly();
       setPredefinedFiltersList(filters);
     } catch (error) {
       console.error('Failed to refresh predefined filters:', error);

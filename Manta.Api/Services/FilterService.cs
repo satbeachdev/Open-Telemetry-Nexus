@@ -10,13 +10,13 @@ public class FilterService(IConfiguration config, IFilterRepository filterReposi
     private readonly ILogger<FilterService> _logger = logger;
     private readonly string _connectionString = config.GetValue<string>("ConnectionString") ?? string.Empty;
     
-    public async Task<IEnumerable<string>> Load(int? skip, int? limit)
+    public async Task<IEnumerable<object>> Load(int? skip, int? limit, bool? textOnly)
     {
         await using var connection = new NpgsqlConnection(_connectionString);
         await connection.OpenAsync();
 
-        var filters = await filterRepository.GetAll(connection);
+        var filters = await filterRepository.GetAll(connection, skip, limit, textOnly);
 
-        return filters.Select(f => f.Text).ToList();
+        return filters;
     }
 }
