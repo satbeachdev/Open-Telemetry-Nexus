@@ -96,7 +96,7 @@ public class FilterRepository : RepositoryBase<Filter>, IFilterRepository
 
             if (textOnly.HasValue && textOnly.Value)
             {
-                sql = "SELECT filter from Filters";
+                sql = "SELECT filter FROM Filters";
             }
 
             if (skip.HasValue && limit.HasValue)
@@ -105,6 +105,8 @@ public class FilterRepository : RepositoryBase<Filter>, IFilterRepository
                 sql += " LIMIT" + limit.Value;
             }
 
+            sql += " ORDER BY last_used DESC";
+            
             if (textOnly.HasValue && textOnly.Value)
             {
                 filters = await connection.QueryAsync<string>(sql);
