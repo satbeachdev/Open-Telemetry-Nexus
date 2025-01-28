@@ -60,16 +60,15 @@ const LeftDrawer: React.FC<LeftDrawerProps> = ({ open, drawerWidth, onFilterSele
         '& .MuiDrawer-paper': {
           width: drawerWidth,
           boxSizing: 'border-box',
+          paddingTop: '16px',
         },
       }}
     >
-      <Toolbar />
-      <Divider />
-      
       <List sx={{ 
         maxHeight: '50%',
         display: 'flex',
-        flexDirection: 'column'
+        flexDirection: 'column',
+        pb: 1
       }}>
         <ListItem>
           <Typography variant="h6" component="div">
@@ -79,7 +78,7 @@ const LeftDrawer: React.FC<LeftDrawerProps> = ({ open, drawerWidth, onFilterSele
         </ListItem>
         <Box sx={{ 
           overflowY: 'auto', 
-          maxHeight: 'calc(50vh - 148px)',
+          maxHeight: 'calc(50vh)',
           scrollbarWidth: 'none',
           msOverflowStyle: 'none',
           flex: '1 1 auto',
@@ -125,7 +124,7 @@ const LeftDrawer: React.FC<LeftDrawerProps> = ({ open, drawerWidth, onFilterSele
 
       <Divider />
 
-      <List>
+      <List sx={{ pt: 0 }}>
         <ListItem>
           <Typography variant="h6" component="div">
             <ViewIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
