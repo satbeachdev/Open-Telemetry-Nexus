@@ -21,6 +21,14 @@ class FilterService {
             return [];
         }
     }
+    static async DeleteFilter(filterId: number): Promise<void> {
+        try {
+            await axios.delete(`http://localhost:8000/filters/${filterId}`);
+        } catch (error) {
+            console.error('Failed to delete filter:', error);
+            throw error;
+        }
+    }
 }
 
 export default FilterService;

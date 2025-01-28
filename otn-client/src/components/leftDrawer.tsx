@@ -15,6 +15,8 @@ import { Filter } from '../models/Filter';
 import { View } from '../models/View';
 import Tooltip from '@mui/material/Tooltip';
 import Box from '@mui/material/Box';
+import DeleteIcon from '@mui/icons-material/Delete';
+import IconButton from '@mui/material/IconButton';
 
 interface LeftDrawerProps {
   open: boolean;
@@ -46,6 +48,19 @@ const LeftDrawer: React.FC<LeftDrawerProps> = ({ open, drawerWidth, onFilterSele
   const handleFilterClick = (filter: string) => {
     if (onFilterSelect) {
       onFilterSelect(filter);
+    }
+  };
+
+  const handleDeleteFilter = async (filterId: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await FilterService.DeleteFilter(filterId);
+      // Refresh the filters list after successful deletion
+      const updatedFilters = await FilterService.getFilters();
+      setFilters(updatedFilters);
+    } catch (error) {
+      console.error('Error deleting filter:', error);
+      // You might want to add some error handling UI here
     }
   };
 
@@ -87,11 +102,33 @@ const LeftDrawer: React.FC<LeftDrawerProps> = ({ open, drawerWidth, onFilterSele
           }
         }}>
           {filters.map((filter) => (
-            <ListItem key={filter.id} disablePadding sx={{ py: 0 }}>
+            <ListItem 
+              key={filter.id} 
+              disablePadding 
+              sx={{ py: 0 }}
+              secondaryAction={
+                <IconButton 
+                  edge="end" 
+                  aria-label="delete"
+                  size="small"
+                  onClick={(e) => handleDeleteFilter(filter.id, e)}
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              }
+            >
               <Tooltip 
                 title={filter.text} 
                 placement="top"
                 TransitionProps={{ style: { marginBottom: '-8px' } }}
+                componentsProps={{
+                  tooltip: {
+                    sx: {
+                      fontSize: '1rem',
+                      padding: '8px 12px'
+                    }
+                  }
+                }}
               >
                 <ListItemButton 
                   onClick={() => handleFilterClick(filter.text)}

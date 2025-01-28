@@ -19,4 +19,12 @@ public class FilterService(IConfiguration config, IFilterRepository filterReposi
 
         return filters;
     }
+
+    public async Task Delete(int filterId)
+    {
+        await using var connection = new NpgsqlConnection(_connectionString);
+        await connection.OpenAsync();
+
+        await filterRepository.Delete(filterId, connection);
+    }
 }

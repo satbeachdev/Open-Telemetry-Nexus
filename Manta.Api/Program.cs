@@ -22,6 +22,7 @@ builder.Services.AddTransient<IWebRequestHandler<string>, GetTraceEvents>();
 builder.Services.AddTransient<IWebRequestHandler<int>, GetEventAttributes>();
 builder.Services.AddTransient<IWebRequestHandler, GetUniqueAttributes>();
 builder.Services.AddTransient<IGetAllFiltersHandler, GetFilters>();
+builder.Services.AddTransient<IDeleteFilterHandler, DeleteFilter>();
 
 builder.Services.AddTransient<IEventService, EventService>();
 builder.Services.AddTransient<IEventRepository, EventRepository>();
@@ -52,7 +53,9 @@ app.MapGet("/events", async (HttpContext ctx, string filter,int skip, int limit,
 app.MapGet("/events/{eventId:int}/attributes", async (HttpContext ctx, [FromRoute] int eventId, [FromServices]IWebRequestHandler<int> getEventAttributes) => await getEventAttributes.Handle(ctx, eventId));
 app.MapGet("/traces/{traceId}/events", async (HttpContext ctx, [FromRoute] string traceId, [FromServices]IWebRequestHandler<string> getTraceEvents) => await getTraceEvents.Handle(ctx, traceId));
 app.MapGet("/events/attribute-names", async (HttpContext ctx, [FromServices]IWebRequestHandler getUniqueAttributes) => await getUniqueAttributes.Handle(ctx));
+
 app.MapGet("/filters", async (HttpContext ctx, int? skip, int? limit, bool? textOnly, [FromServices]IGetAllFiltersHandler getFilters) => await getFilters.Handle(ctx, skip, limit, textOnly));
+app.MapDelete("/filters/{filterId:int}", async (HttpContext ctx, [FromRoute] int filterId, [FromServices]IDeleteFilterHandler deleteFilter) => await deleteFilter.Handle(ctx, filterId));
 
 app.UseMiddleware<GzipDecompressionMiddleware>();
 app.UseMiddleware<LogJsonRequestBodyMiddleware>();
