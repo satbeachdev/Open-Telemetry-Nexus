@@ -1,4 +1,3 @@
-using Manta.Api;
 using Manta.Api.EndpointHandlers.Application;
 using Manta.Api.EndpointHandlers.OpenTelemetry;
 using Manta.Api.Interfaces;
@@ -29,14 +28,16 @@ builder.Services.AddTransient<IEventRepository, EventRepository>();
 builder.Services.AddTransient<IFilterService, FilterService>();
 builder.Services.AddTransient<IFilterRepository, FilterRepository>();
 
+var allowedServersSection = builder.Configuration.GetSection("AllowedServers");
+var allowedServers = allowedServersSection.Get<string[]>() ?? ["http://localhost:3000"];
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigin",
         cors => cors
-            .WithOrigins("http://localhost:3000")
+            .WithOrigins(allowedServers)
             .AllowAnyMethod()
             .AllowAnyHeader()
-            //.AllowCredentials()
             .WithExposedHeaders("x-total-count"));
 });
 

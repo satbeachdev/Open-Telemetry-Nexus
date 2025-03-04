@@ -1,11 +1,13 @@
 using System.Collections.Specialized;
 using System.Dynamic;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Manta.Api.FilterConverter;
 using Manta.Api.Models;
 using Manta.Api.Models.OpenTelemetry;
 using Manta.Api.Repositories;
 using Npgsql;
+using Attribute = Manta.Api.Models.OpenTelemetry.Attribute;
 
 namespace Manta.Api.Services;
 
@@ -108,7 +110,7 @@ public class EventService(IConfiguration config, IEventRepository eventRepositor
                             TraceId = logRecord.traceId,
                             ParentSpanId = null,
                             SpanId = logRecord.spanId,
-                            Message = logRecord.body.stringValue,
+                            Message = GetFormattedMessage(logRecord.body.stringValue, logRecord.attributes),
                             ServiceName = (string?)(message.resourceLogs[0].resource.attributes.SingleOrDefault(a => a.Key == "service.name"))?.Value ?? string.Empty,
                             StartTime = timestamp,
                             EndTime = timestamp,
@@ -129,7 +131,6 @@ public class EventService(IConfiguration config, IEventRepository eventRepositor
             throw;
         }
     }
-    
     
     public async Task Save(TraceMessage message)
     {
@@ -188,6 +189,22 @@ public class EventService(IConfiguration config, IEventRepository eventRepositor
             Console.WriteLine(e);
             throw;
         }
+    }
+    
+    private static string GetFormattedMessage(string format, List<Attribute>? attributes)
+    {
+        if (attributes == null || attributes.Count == 0)
+        {
+            return format;
+        }
+
+        return Regex.Replace(format, @"\{(\w+)\}", match =>
+        {
+            var key = match.Groups[1].Value;
+            var attribute = attributes.Find(attr => attr.Key.Equals(key, StringComparison.OrdinalIgnoreCase));
+            
+            return attribute != null ? attribute.Value?.ToString() ?? string.Empty : match.Value;
+        });
     }
     
     static dynamic ConvertToDynamic(IDictionary<string, object> dictionary)

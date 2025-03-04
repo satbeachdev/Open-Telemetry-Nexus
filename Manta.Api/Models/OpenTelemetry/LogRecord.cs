@@ -9,5 +9,5 @@ public class LogRecord
     public string traceId { get; set; }
     public string spanId { get; set; }
     public Body body { get; set; }
-    public List<Attribute> attributes { get; set; }
+    public List<Attribute>? attributes { get; set; }
 }

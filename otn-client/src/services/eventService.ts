@@ -4,24 +4,29 @@ import { trace, context, propagation, Span, SpanStatusCode } from '@opentelemetr
 import { Event } from '../models/Event';
 import { Attribute } from '../models/Attribute';
 import { TraceEvent } from '../models/TraceEvent';
+import ConfigService from './configService';
 
 class EventService {
   private static eventAttributes: Map<string, any[]> = new Map();
+  private static configService = ConfigService.getInstance();
 
   static async LoadEvents(skip: number, limit: number): Promise<{ data: Event[], count: number }> {
-    const response = await axios.get(`http://localhost:8000/allevents?skip=${skip}&limit=${limit}`);
+    const config = await this.configService.getConfig();
+    const response = await axios.get(`${config.apiBaseUrl}/allevents?skip=${skip}&limit=${limit}`);
     const totalCount = response.headers['x-total-count'] || '0';
     console.log('x-total-count = ' + totalCount);
     return { data: response.data, count: parseInt(totalCount) };
   }
 
   static async LoadEventAttributes(eventId: number): Promise<Attribute[]> {
-    const response = await axios.get(`http://localhost:8000/events/${eventId}/attributes`);
+    const config = await this.configService.getConfig();
+    const response = await axios.get(`${config.apiBaseUrl}/events/${eventId}/attributes`);
     return response.data;
   }
 
   static async LoadTraceEvents(traceId: string): Promise<TraceEvent[]> {
-    const response = await axios.get(`http://localhost:8000/traces/${traceId}/events`);
+    const config = await this.configService.getConfig();
+    const response = await axios.get(`${config.apiBaseUrl}/traces/${traceId}/events`);
     return response.data.map((event: any) => ({
       ...event,
       startTime: ZonedDateTime.parse(event.startTime),
@@ -30,7 +35,8 @@ class EventService {
   }
 
   static async LoadUniqueAttributeNames(): Promise<string[]> {
-    const response = await axios.get(`http://localhost:8000/events/attribute-names`);
+    const config = await this.configService.getConfig();
+    const response = await axios.get(`${config.apiBaseUrl}/events/attribute-names`);
     return response.data;
   }
 
@@ -44,11 +50,12 @@ class EventService {
         // inject context to trace headers for propagtion to the next service
         propagation.inject(context.active(), traceHeaders);
 
-        const config: AxiosRequestConfig = {
+        const axiosConfig: AxiosRequestConfig = {
           headers: traceHeaders
         };
 
-        const response = await axios.get(`http://localhost:8000/events/attribute-names`, config);
+        const config = await this.configService.getConfig();
+        const response = await axios.get(`${config.apiBaseUrl}/events/attribute-names`, axiosConfig);
 
         return response.data;
       } catch (error) {
@@ -60,7 +67,8 @@ class EventService {
   }
 
   static async FilterEvents(filter: string, skip: number, limit: number): Promise<{ data: Event[], count: number }> {
-    const response = await axios.get(`http://localhost:8000/events?filter=${filter}&skip=${skip}&limit=${limit}`);
+    const config = await this.configService.getConfig();
+    const response = await axios.get(`${config.apiBaseUrl}/events?filter=${filter}&skip=${skip}&limit=${limit}`);
     const totalCount = parseInt(response.headers['x-total-count'] || '0');
     console.log('x-total-count = ' + totalCount);
     return { data: response.data, count: totalCount };
@@ -68,8 +76,9 @@ class EventService {
 
   static async LoadPredefinedFilters(): Promise<string[]> {
     try {
-        const response = await axios.get('http://localhost:8000/filters'); 
-        return response.data;
+      const config = await this.configService.getConfig();
+      const response = await axios.get(`${config.apiBaseUrl}/filters`); 
+      return response.data;
     } catch (error) {
         console.error('Failed to load predefined filters:', error);
         return [];
@@ -83,7 +92,8 @@ class EventService {
     }
 
     try {
-        const response = await fetch(`/api/events/${eventId}/attributes`);
+      const config = await this.configService.getConfig();
+      const response = await fetch(`${config.apiBaseUrl}/api/events/${eventId}/attributes`);
         const attributes = await response.json();
         // Store attributes for this specific event
         this.eventAttributes.set(eventId, attributes);
