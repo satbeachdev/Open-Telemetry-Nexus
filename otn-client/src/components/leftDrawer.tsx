@@ -21,7 +21,7 @@ import IconButton from '@mui/material/IconButton';
 interface LeftDrawerProps {
   open: boolean;
   drawerWidth: number;
-  onFilterSelect?: (filter: string) => void;
+  onFilterSelect?: (filter: string, fromDrawer: boolean) => void;
 }
 
 const LeftDrawer: React.FC<LeftDrawerProps> = ({ open, drawerWidth, onFilterSelect }) => {
@@ -47,7 +47,7 @@ const LeftDrawer: React.FC<LeftDrawerProps> = ({ open, drawerWidth, onFilterSele
 
   const handleFilterClick = (filter: string) => {
     if (onFilterSelect) {
-      onFilterSelect(filter);
+      onFilterSelect(filter, true);
     }
   };
 

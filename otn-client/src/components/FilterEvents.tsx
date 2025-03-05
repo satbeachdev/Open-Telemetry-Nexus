@@ -15,7 +15,7 @@ interface FilterEventsProps {
 }
 
 export interface FilterEventsMethods {
-  setAndSearch: (filter: string) => void;
+  setAndSearch: (filter: string, fromDrawer?: boolean) => void;
 }
 
 const FilterEvents = React.forwardRef<FilterEventsMethods, FilterEventsProps>(({ 
@@ -32,6 +32,7 @@ const FilterEvents = React.forwardRef<FilterEventsMethods, FilterEventsProps>(({
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [showingPredefined, setShowingPredefined] = useState(false);
   const [inputValue, setInputValue] = useState('');
+  const [isFromDrawer, setIsFromDrawer] = useState(false);
 
   useEffect(() => {
     const loadAttributeNames = async () => {
@@ -100,6 +101,7 @@ const FilterEvents = React.forwardRef<FilterEventsMethods, FilterEventsProps>(({
   const handleInputChange = (_: React.SyntheticEvent, newValue: string) => {
     setInputValue(newValue || '');
     setSearchTerm(newValue || '');
+    setIsFromDrawer(false);
   };
 
   const currentWord = getCurrentWord(inputValue);
@@ -111,16 +113,17 @@ const FilterEvents = React.forwardRef<FilterEventsMethods, FilterEventsProps>(({
 
   // Expose methods through ref
   React.useImperativeHandle(ref, () => ({
-    setAndSearch: (filter: string) => {
+    setAndSearch: (filter: string, fromDrawer?: boolean) => {
       // Update both controlled values of Autocomplete
       setSearchTerm(filter);
       setInputValue(filter);
       
-      // Trigger the same flow as when selecting from predefined filters
-      if (showingPredefined) {
-        setDropdownOpen(false);
-        setShowingPredefined(false);
-      }
+      // Set the fromDrawer flag
+      setIsFromDrawer(!!fromDrawer);
+      
+      // Close dropdowns
+      setDropdownOpen(false);
+      setShowingPredefined(false);
       
       // Trigger search directly
       onSearch(encodeURIComponent(filter));
@@ -134,7 +137,7 @@ const FilterEvents = React.forwardRef<FilterEventsMethods, FilterEventsProps>(({
         <Autocomplete
           freeSolo
           options={showingPredefined ? predefinedFiltersList : matchingOptions}
-          open={showingPredefined ? dropdownOpen : (shouldShow && matchingOptions.length > 0)}
+          open={isFromDrawer ? false : (showingPredefined ? dropdownOpen : (shouldShow && matchingOptions.length > 0))}
           value={searchTerm}
           inputValue={inputValue}
           onOpen={() => {

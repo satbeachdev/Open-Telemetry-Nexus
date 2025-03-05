@@ -105,30 +105,33 @@ const InternalEventList: React.FC<EventListProps> = ({ onFilterEventsRefChange }
           {
             accessorKey: 'startTime',
             header: 'Timestamp',
-            size: 148,
-            maxSize: 148,
-            grow: 0,
+            size: undefined,
+            minSize: 120,
+            maxSize: 200,
+            grow: 1,
             Cell:({ cell }) => (<span>{new Date(cell.getValue<Date>()).toISOString().replace('T', ' ').replace('Z', '')}</span>)
           },
           {
             accessorKey: 'serviceName',
             header: 'Service',
-            size: 100,
-            maxSize: 100,
-            grow: 0,             
+            size: undefined,
+            minSize: 80,
+            maxSize: 150,
+            grow: 1,             
           },          
           {
             accessorKey: 'message',
             header: 'Message',
-            size: undefined, // Remove fixed size
+            size: undefined,
             grow: 4,             
           },
           {
             accessorKey: 'durationMilliseconds',
             header: 'Duration',
-            size: 80,
-            maxSize: 80,
-            grow: 0,
+            size: undefined,
+            minSize: 60,
+            maxSize: 100,
+            grow: 1,
             Cell: ({ cell }) => (
               <span style={{ display: 'block', textAlign: 'right' }}>
                 {TimeFormatter.FormatTime(cell.getValue<number>(), '')}
@@ -202,7 +205,13 @@ const InternalEventList: React.FC<EventListProps> = ({ onFilterEventsRefChange }
 		onPaginationChange: () => {}, // Required for manual pagination
 		state: { isLoading, showProgressBars: isFetching },
 		muiTableContainerProps: {
-			sx: { height: tableHeight, maxHeight: 'unset' },
+			sx: { 
+                height: tableHeight, 
+                maxHeight: 'unset',
+                '& .MuiTableCell-root': {
+                    fontSize: 'inherit'
+                }
+            },
 		},
 		muiToolbarAlertBannerProps: isError
 			? { color: 'error', children: 'Error loading data' }

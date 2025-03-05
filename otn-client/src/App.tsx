@@ -46,8 +46,8 @@ const App: React.FC = () => {
     setTabValue(newValue);
   };
 
-  const handleFilterSelect = (filter: string) => {
-    filterEventsRef?.current?.setAndSearch(filter);
+  const handleFilterSelect = (filter: string, fromDrawer: boolean) => {
+    filterEventsRef?.current?.setAndSearch(filter, fromDrawer);
   };
 
   return (

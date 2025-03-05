@@ -109,3 +109,61 @@ td {
 .bar.chamfered {
   clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px);
 }
+
+/* Add resolution scaling rules */
+@media screen and (min-width: 2560px) {
+  html {
+    /* Scale for 2560px width (typical 2K/QHD) */
+    font-size: 16px;
+  }
+  
+  .MuiTableCell-root {
+    font-size: 0.875rem !important;
+  }
+}
+
+@media screen and (min-width: 3840px) {
+  html {
+    /* Scale for 4K displays */
+    font-size: 24px;
+  }
+
+  .MuiTableCell-root {
+    font-size: 1rem !important;
+  }
+}
+
+/* Base styles to ensure consistent rendering */
+html {
+  /* Default font size for standard resolutions */
+  font-size: 14px;
+  -webkit-text-size-adjust: 100%;
+  -moz-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Ensure proper scaling of UI elements */
+.MuiTableCell-root {
+  font-size: 0.875rem !important;
+}
+
+.MuiTypography-root {
+  font-size: 1rem;
+}
+
+/* Adjust icon sizes */
+.MuiSvgIcon-root {
+  font-size: 1.25rem !important;
+}
+
+/* Ensure buttons and inputs scale properly */
+.MuiButton-root,
+.MuiInputBase-root {
+  font-size: 0.875rem !important;
+}
+
+/* Ensure consistent padding and margins */
+.MuiTableCell-root {
+  padding: 0.5rem !important;
+}
