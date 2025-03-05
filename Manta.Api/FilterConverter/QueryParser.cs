@@ -74,15 +74,11 @@ public static class QueryParser
                 var parts = condition.Field.Split('.');
                 var jsonKey = parts.Last();
 
+                var value = IsLikeOperation(condition.Operator) ? $"%{condition.Value}%" : condition.Value;
                 // Numeric vs text handling
-                if (condition.Value is double)
-                {
-                    whereClause = $"(e.attributes->'{jsonKey}')::numeric {GetOperator(condition.Operator)} {condition.Value}";
-                }
-                else
-                {
-                    whereClause = $"(e.attributes->>'{jsonKey}') {GetOperator(condition.Operator)} '{condition.Value}'";
-                }
+                whereClause = condition.Value is double 
+                    ? $"(e.attributes->'{jsonKey}')::numeric {GetOperator(condition.Operator)} {condition.Value}" 
+                    : $"(e.attributes->>'{condition.Field}') {GetOperator(condition.Operator)} '{value}'";
             }
             else
             {
@@ -114,7 +110,19 @@ public static class QueryParser
         {
             "contains" => "LIKE",
             "like" => "LIKE",
+            "~" => "LIKE",
             _ => op
+        };
+    }
+    
+    private static bool IsLikeOperation(string op)
+    {
+        return op.ToLower() switch
+        {
+            "contains" => true,
+            "like" => true,
+            "~" => true,
+            _ => false
         };
     }
 }
