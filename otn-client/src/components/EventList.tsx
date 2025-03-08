@@ -105,33 +105,78 @@ const InternalEventList: React.FC<EventListProps> = ({ onFilterEventsRefChange }
           {
             accessorKey: 'startTime',
             header: 'Timestamp',
-            minSize: 80,
-            maxSize: 80,
+            size: 175,
             enableResizing: false,
-            Cell:({ cell }) => (<span>{new Date(cell.getValue<Date>()).toISOString().replace('T', ' ').replace('Z', '')}</span>)
+            muiTableHeadCellProps: {
+              align: 'center',
+              sx: { 
+                textAlign: 'center !important',
+                width: '175px !important',
+                minWidth: '175px !important',
+                maxWidth: '175px !important'
+              }
+            },
+            muiTableBodyCellProps: ({ row }) => ({
+              align: 'center',
+              sx: { 
+                textAlign: row.getIsExpanded() ? 'left !important' : 'center !important',
+                width: '175px !important',
+                minWidth: '175px !important',
+                maxWidth: '175px !important'
+              }
+            }),
+            Cell: ({ cell, row }) => (
+              <span style={{ 
+                display: 'block', 
+                textAlign: row.getIsExpanded() ? 'left' : 'center' 
+              }}>
+                {new Date(cell.getValue<Date>()).toISOString().replace('T', ' ').replace('Z', '')}
+              </span>
+            )
           },
           {
             accessorKey: 'serviceName',
             header: 'Service Name',
-            size: 100,
+            size: 150,
             enableResizing: true,
-            minSize: 100,
           },          
           {
             accessorKey: 'message',
             header: 'Message',
+            minSize: 200,
+            size: 800,
             enableResizing: true,
           },
           {
             accessorKey: 'durationMilliseconds',
             header: 'Duration',
-            minSize: 40,
-            maxSize: 40,
+            size: 100,
             enableResizing: false,
-            Cell: ({ cell }) => (
-                <span style={{ display: 'block', textAlign: 'right' }}>
-                    {TimeFormatter.FormatTime(cell.getValue<number>(), '')}
-                </span>
+            muiTableHeadCellProps: {
+              align: 'center',
+              sx: { 
+                textAlign: 'center !important',
+                width: '100px !important',
+                minWidth: '100px !important',
+                maxWidth: '100px !important'
+              }
+            },
+            muiTableBodyCellProps: ({ row }) => ({
+              align: 'center',
+              sx: { 
+                textAlign: row.getIsExpanded() ? 'left !important' : 'center !important',
+                width: '100px !important',
+                minWidth: '100px !important',
+                maxWidth: '100px !important'
+              }
+            }),
+            Cell: ({ cell, row }) => (
+              <span style={{ 
+                display: 'block', 
+                textAlign: row.getIsExpanded() ? 'left' : 'center' 
+              }}>
+                {TimeFormatter.FormatTime(cell.getValue<number>(), '')}
+              </span>
             )
           }],
 		[]
@@ -193,8 +238,8 @@ const InternalEventList: React.FC<EventListProps> = ({ onFilterEventsRefChange }
         enableTopToolbar: false,
         enableRowVirtualization: true,
         enableColumnResizing: true,
-        columnResizeMode: 'onChange',
-        layoutMode: 'grid',
+        columnResizeMode: 'onEnd',
+        layoutMode: 'semantic',
 		manualPagination: true,
 		rowCount: resultCount,
         manualFiltering: true,
@@ -223,16 +268,23 @@ const InternalEventList: React.FC<EventListProps> = ({ onFilterEventsRefChange }
 			sx: {
 				tableLayout: 'fixed',
 				'& .MuiTableCell-root': {
-					padding: '8px 16px',
+					padding: '0px !important',
 					overflow: 'hidden',
 					textOverflow: 'ellipsis',
 					whiteSpace: 'nowrap',
+				},
+				'& td:first-child, & th:first-child, & td:last-child, & th:last-child': {
+					textAlign: 'center !important',
+				},
+				'& .Mui-TableRow-expanded td:first-child, & .Mui-TableRow-expanded td:last-child': {
+					textAlign: 'left !important',
 				},
 				'& .MuiTableHead-root .MuiTableCell-root': {
 					backgroundColor: theme.palette.action.hover,
 					fontWeight: 'bold',
 					borderBottom: `1px solid ${theme.palette.divider}`,
 					borderRight: `1px solid ${theme.palette.divider}`,
+					position: 'relative',
 					'&:first-of-type': {
 						borderLeft: 'none',
 						borderRight: 'none',
@@ -290,6 +342,7 @@ const InternalEventList: React.FC<EventListProps> = ({ onFilterEventsRefChange }
                     margin: 0,
                     backgroundColor: 'transparent',
                     tableLayout: 'auto',
+                    width: 'auto'
                 }}>
                     <TableBody sx={{ backgroundColor: 'transparent' }}>
                         {eventAttributes.get(row.original.id)?.map((attr, index) => (
@@ -297,18 +350,19 @@ const InternalEventList: React.FC<EventListProps> = ({ onFilterEventsRefChange }
                                 <TableCell 
                                     component="th" 
                                     scope="row" 
+                                    align="left"
                                     sx={{ 
-                                        padding: '1px 8px 1px 0',
                                         verticalAlign: 'top',
                                         whiteSpace: 'nowrap',
-                                        minWidth: '148px',
+                                        width: 'auto',
+                                        minWidth: 'auto'
                                     }}
                                 >
-                                    {attr.name}
+                                    <span style={{ textAlign: 'left', display: 'block', paddingRight: '16px' }}>{attr.name}</span>
                                 </TableCell>
                                 <TableCell 
+                                    align="left"
                                     sx={{ 
-                                        padding: '1px 8px 1px 0',
                                         whiteSpace: 'pre-wrap',
                                         wordBreak: 'break-word',
                                         width: '100%',
@@ -321,7 +375,7 @@ const InternalEventList: React.FC<EventListProps> = ({ onFilterEventsRefChange }
                                         })
                                     }}
                                 >
-                                    {attr.value}
+                                    <span style={{ textAlign: 'left', display: 'block' }}>{attr.value}</span>
                                 </TableCell>
                             </TableRow>
                         ))}
@@ -351,9 +405,9 @@ const InternalEventList: React.FC<EventListProps> = ({ onFilterEventsRefChange }
                 maxSize: 0,
             },
         },
-        defaultDisplayColumn: {
-            enableResizing: true,
-            size: 100,
+        defaultColumn: {
+            minSize: 40,
+            maxSize: 1000,
         },
     };
 
