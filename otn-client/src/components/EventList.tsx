@@ -307,8 +307,8 @@ const InternalEventList: React.FC<EventListProps> = ({ onFilterEventsRefChange }
                                         wordBreak: 'break-word',
                                         width: '100%',
                                         ...(attr.name === 'exception.stacktrace' && {
-                                            backgroundColor: 'error.main',
-                                            color: 'white',
+                                            backgroundColor: '#a00000 !important',
+                                            color: '#ffffff',
                                             padding: '8px 8px',
                                             borderRadius: '4px',
                                             fontFamily: 'monospace'
@@ -417,6 +417,15 @@ const InternalEventList: React.FC<EventListProps> = ({ onFilterEventsRefChange }
         }
     }, [onFilterEventsRefChange]);
 
+    const getTraceTimeRange = (events: TraceEvent[]) => {
+        if (!events.length) return null;
+        
+        const startTime = new Date(Math.min(...events.map(e => e.startTime.toInstant().toEpochMilli())));
+        const endTime = new Date(Math.max(...events.map(e => e.startTime.toInstant().toEpochMilli() + (e.durationMilliseconds || 0))));
+        
+        return { startTime, endTime };
+    };
+
     return (
         <Allotment ref={allotmentRef} vertical defaultSizes={[topPaneSize, -1]}>
             <Allotment.Pane minSize={0}>
@@ -432,9 +441,20 @@ const InternalEventList: React.FC<EventListProps> = ({ onFilterEventsRefChange }
                         display: 'flex', 
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        mb: 1  // Reverted padding changes
+                        mb: 1
                     }}>
-                        <Typography variant="h6">Trace Timeline</Typography>
+                        <Typography variant="h6">
+                            Trace Timeline
+                            {traceEvents.length > 0 && (() => {
+                                const range = getTraceTimeRange(traceEvents);
+                                if (range) {
+                                    return <span style={{ fontSize: 'calc(1.25rem - 2pt)' }}>
+                                        {` (${range.startTime.toISOString().replace('T', ' ').replace('Z', '')} - ${range.endTime.toISOString().replace('T', ' ').replace('Z', '')})`}
+                                    </span>;
+                                }
+                                return '';
+                            })()}
+                        </Typography>
                         <IconButton 
                             size="small"
                             onClick={() => {

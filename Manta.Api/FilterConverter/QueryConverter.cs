@@ -14,6 +14,6 @@ public static class QueryConverter
 
         Console.WriteLine($"Parsed query = {parsedQuery}");
         
-        return $"SELECT e.* FROM events e WHERE {parsedQuery};";
+        return $"SELECT e.* FROM events e WHERE {parsedQuery} ORDER BY start_timestamp DESC ;";
     }
 }
