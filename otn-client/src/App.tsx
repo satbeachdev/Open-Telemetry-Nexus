@@ -48,6 +48,9 @@ const App: React.FC = () => {
 
   const handleFilterSelect = (filter: string, fromDrawer: boolean) => {
     filterEventsRef?.current?.setAndSearch(filter, fromDrawer);
+    if (fromDrawer) {
+      setLeftOpen(false);
+    }
   };
 
   return (
