@@ -105,37 +105,33 @@ const InternalEventList: React.FC<EventListProps> = ({ onFilterEventsRefChange }
           {
             accessorKey: 'startTime',
             header: 'Timestamp',
-            size: undefined,
-            minSize: 120,
-            maxSize: 200,
-            grow: 1,
+            minSize: 80,
+            maxSize: 80,
+            enableResizing: false,
             Cell:({ cell }) => (<span>{new Date(cell.getValue<Date>()).toISOString().replace('T', ' ').replace('Z', '')}</span>)
           },
           {
             accessorKey: 'serviceName',
-            header: 'Service',
-            size: undefined,
-            minSize: 80,
-            maxSize: 150,
-            grow: 1,             
+            header: 'Service Name',
+            size: 100,
+            enableResizing: true,
+            minSize: 100,
           },          
           {
             accessorKey: 'message',
             header: 'Message',
-            size: undefined,
-            grow: 4,             
+            enableResizing: true,
           },
           {
             accessorKey: 'durationMilliseconds',
             header: 'Duration',
-            size: undefined,
-            minSize: 60,
-            maxSize: 100,
-            grow: 1,
+            minSize: 40,
+            maxSize: 40,
+            enableResizing: false,
             Cell: ({ cell }) => (
-              <span style={{ display: 'block', textAlign: 'right' }}>
-                {TimeFormatter.FormatTime(cell.getValue<number>(), '')}
-              </span>
+                <span style={{ display: 'block', textAlign: 'right' }}>
+                    {TimeFormatter.FormatTime(cell.getValue<number>(), '')}
+                </span>
             )
           }],
 		[]
@@ -197,6 +193,7 @@ const InternalEventList: React.FC<EventListProps> = ({ onFilterEventsRefChange }
         enableTopToolbar: false,
         enableRowVirtualization: true,
         enableColumnResizing: true,
+        columnResizeMode: 'onChange',
         layoutMode: 'grid',
 		manualPagination: true,
 		rowCount: resultCount,
@@ -226,12 +223,23 @@ const InternalEventList: React.FC<EventListProps> = ({ onFilterEventsRefChange }
 			sx: {
 				tableLayout: 'fixed',
 				'& .MuiTableCell-root': {
-					padding: '0 !important',  // Force override padding
+					padding: '8px 16px',
+					overflow: 'hidden',
+					textOverflow: 'ellipsis',
+					whiteSpace: 'nowrap',
 				},
 				'& .MuiTableHead-root .MuiTableCell-root': {
-					backgroundColor: theme.palette.action.hover,  // Use theme color for shading
-					fontWeight: 'bold',  // Optional: make header text bold
-					padding: '8px 16px !important',  // Keep padding for header cells
+					backgroundColor: theme.palette.action.hover,
+					fontWeight: 'bold',
+					borderBottom: `1px solid ${theme.palette.divider}`,
+					borderRight: `1px solid ${theme.palette.divider}`,
+					'&:first-of-type': {
+						borderLeft: 'none',
+						borderRight: 'none',
+					},
+					'&:last-child': {
+						borderRight: 'none',
+					},
 				},
 			},
 		},
@@ -324,7 +332,12 @@ const InternalEventList: React.FC<EventListProps> = ({ onFilterEventsRefChange }
         enableExpanding: true,
         muiTableHeadCellProps: {
             sx: {
+                textAlign: 'center',
+                '& .Mui-TableHeadCell-Content': {
+                    justifyContent: 'center',
+                },
                 '& .Mui-TableHeadCell-Content-Labels': {
+                    justifyContent: 'center',
                     '& .MuiButtonBase-root': {
                         display: 'none', // This hides the expand all button in the header
                     },
@@ -337,6 +350,10 @@ const InternalEventList: React.FC<EventListProps> = ({ onFilterEventsRefChange }
                 minSize: 0,
                 maxSize: 0,
             },
+        },
+        defaultDisplayColumn: {
+            enableResizing: true,
+            size: 100,
         },
     };
 

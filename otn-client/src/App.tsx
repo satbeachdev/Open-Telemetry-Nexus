@@ -11,7 +11,7 @@ import { FilterEventsMethods } from './components/FilterEvents';
 
 export const ThemeContext = createContext<'light' | 'dark'>('light');
 
-const drawerWidth = 240;
+const drawerWidth = 600;
 
 const App: React.FC = () => {
   const [leftOpen, setLeftOpen] = useState(false);
