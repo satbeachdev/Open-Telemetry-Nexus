@@ -225,15 +225,13 @@ const InternalEventList: React.FC<EventListProps> = ({ onFilterEventsRefChange }
 			},
 			sx: {
 				tableLayout: 'fixed',
-				// '& .MuiTableCell-root': {
-				// 	borderRight: '1px solid rgba(224, 224, 224, 1)',
-				// },
-				// '& .MuiTableCell-root:last-child': {
-				// 	borderRight: 'none',
-				// },
+				'& .MuiTableCell-root': {
+					padding: '0 !important',  // Force override padding
+				},
 				'& .MuiTableHead-root .MuiTableCell-root': {
 					backgroundColor: theme.palette.action.hover,  // Use theme color for shading
 					fontWeight: 'bold',  // Optional: make header text bold
+					padding: '8px 16px !important',  // Keep padding for header cells
 				},
 			},
 		},
