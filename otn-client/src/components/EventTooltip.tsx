@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { Box } from '@mui/material';
 
 interface EventTooltipProps {
@@ -25,22 +25,22 @@ const EventTooltip: React.FC<EventTooltipProps> = ({
   const tooltipRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (showTooltip && tooltipRef.current && containerRef.current) {
-      const containerRect = containerRef.current.getBoundingClientRect();
-      const tooltipRect = tooltipRef.current.getBoundingClientRect();
-      const viewportWidth = window.innerWidth;
-      
-      // If tooltip would overflow right side, force left placement
-      if (containerRect.right + tooltipRect.width > viewportWidth) {
-        tooltipRef.current.style.right = '100%';
-        tooltipRef.current.style.left = 'auto';
-      } else {
-        tooltipRef.current.style.left = '100%';
-        tooltipRef.current.style.right = 'auto';
-      }
-    }
-  }, [showTooltip]);
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!showTooltip || !containerRef.current || !tooltipRef.current) return;
+    
+    const tooltipWidth = tooltipRef.current.offsetWidth;
+    const windowWidth = window.innerWidth;
+    const mouseX = e.clientX;
+    
+    // Determine if we should show the tooltip on the left or right based on available space
+    const spaceOnRight = windowWidth - mouseX;
+    const shouldShowOnLeft = spaceOnRight < (tooltipWidth + 20);
+    
+    const x = shouldShowOnLeft ? mouseX - tooltipWidth - 10 : mouseX + 10;
+    const y = e.clientY;
+    
+    tooltipRef.current.style.transform = `translate(${x}px, ${y}px)`;
+  };
 
   return (
     <div
@@ -53,6 +53,7 @@ const EventTooltip: React.FC<EventTooltipProps> = ({
         setShowTooltip(true);
         onMouseEnter?.();
       }}
+      onMouseMove={handleMouseMove}
       onMouseLeave={() => {
         setShowTooltip(false);
         onMouseLeave?.();
@@ -63,9 +64,10 @@ const EventTooltip: React.FC<EventTooltipProps> = ({
         <Box
           ref={tooltipRef}
           sx={{
-            position: 'absolute',
-            top: '50%',
-            transform: 'translateY(-50%)',
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            transform: 'translate(0, 0)',
             backgroundColor: 'rgba(0, 0, 0, 0.8)',
             color: 'white',
             padding: '4px 8px',
@@ -74,8 +76,7 @@ const EventTooltip: React.FC<EventTooltipProps> = ({
             whiteSpace: 'nowrap',
             zIndex: 9999,
             pointerEvents: 'none',
-            marginLeft: '10px',
-            marginRight: '10px'
+            transformOrigin: '0 50%'
           }}
         >
           {title}

@@ -66,7 +66,7 @@ const LogEvent: React.FC<LogEventProps> = ({ id, index, message, left, top, barH
     >
       <EventTooltip
         title={`@${TimeFormatter.FormatTime(offset)}: ${message}`}
-        placement={isNearRightEdge ? "left" : "right"}
+        placement="left"
         style={{ 
           cursor: 'pointer',
           width: '100%'
